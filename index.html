@@ -21,16 +21,18 @@
     .card .content { padding: 14px; display: grid; gap: 10px; }
 
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    input[type="text"], select {
+    input[type="text"], select, input[type="number"] {
       padding: 10px 12px; border: 1px solid #d9d9e6; border-radius: 10px; background:#fff;
     }
     input[type="text"] { flex: 1; min-width: 220px; }
+    input[type="number"] { width: 110px; }
     button { border: 1px solid #d0d0dd; background: #fff; padding: 10px 12px; border-radius: 10px; cursor: pointer; }
     button:hover { background: #f2f3f9; }
     button.primary { background: #111; color: #fff; border-color: #111; }
     button.primary:hover { background: #222; }
     button.danger { border-color: #ffb3b3; }
     button.danger:hover { background: #fff0f0; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
 
     .tab {
       border:1px solid rgba(255,255,255,.25);
@@ -61,12 +63,19 @@
     .kv .box .v { font-size: 18px; font-weight: 700; margin-top: 2px; }
 
     textarea { width: 100%; min-height: 120px; padding: 10px 12px; border: 1px solid #d9d9e6; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; }
+
+    .session-box { border: 1px solid #ececf4; border-radius: 12px; padding: 12px; display:grid; gap:10px; }
+    .session-front { font-size: 18px; font-weight: 700; }
+    .session-reveal { border-left: 4px solid #111; padding-left: 10px; display:none; }
+    .session-reveal.show { display:block; }
+    .divider { height:1px; background:#eee; margin:6px 0; }
+    .small-note { font-size:12px; color:#444; }
   </style>
 </head>
 <body>
 <header>
   <div class="top">
-    <h1>Keinap — JLPT N5 → N1 (Lessons + Reviews)</h1>
+    <h1>Keinap — JLPT N5 → N1 (Lessons por rondas + Reviews)</h1>
     <div class="tabs" id="levelTabs"></div>
   </div>
 </header>
@@ -75,6 +84,49 @@
   <section class="card">
     <header><h2>Lessons</h2></header>
     <div class="content">
+
+      <!-- Modo WaniKani: ronda de lecciones -->
+      <div class="session-box">
+        <div class="item-top">
+          <div>
+            <div class="small-note">Lesson Session (rondas)</div>
+            <div class="muted" id="sessionStatus">Sin sesión activa.</div>
+          </div>
+          <span class="pill" id="remainingPill">Remaining: 0</span>
+        </div>
+
+        <div class="row">
+          <label class="muted" for="batchSize">Batch</label>
+          <input id="batchSize" type="number" min="1" max="50" step="1" value="10" />
+          <button class="primary" id="startSessionBtn">Start</button>
+          <button id="endSessionBtn" class="danger">End</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+          <div class="muted" id="sessionCounter">Item: - / -</div>
+          <div class="session-front" id="sessionFront">Presiona Start.</div>
+        </div>
+
+        <div class="row">
+          <button id="revealBtn">Reveal</button>
+          <button class="primary" id="markLearnedNextBtn">Mark learned + Next</button>
+          <button id="skipItemBtn">Skip (no learned)</button>
+        </div>
+
+        <div id="sessionReveal" class="session-reveal">
+          <div class="muted">Detalle</div>
+          <div id="sessionDetail">-</div>
+        </div>
+
+        <div class="muted">
+          Regla: una lección solo entra a Reviews cuando la completas con “Mark learned + Next”.
+          Si haces Skip, vuelve al pool de “no learned”.
+        </div>
+      </div>
+
+      <!-- Agregar manual (opcional, se mantiene) -->
       <div class="row">
         <select id="newLessonLevel" aria-label="Nivel JLPT">
           <option value="N5">N5</option>
@@ -83,7 +135,7 @@
           <option value="N2">N2</option>
           <option value="N1">N1</option>
         </select>
-        <input id="newLessonText" type="text" placeholder="Nueva lección (ej: 行く (いく) – ir)" />
+        <input id="newLessonText" type="text" placeholder="Nueva lección (ej: 行く（いく） - ir)" />
         <button class="primary" id="addLessonBtn">Agregar</button>
       </div>
 
@@ -103,6 +155,8 @@
         <div class="progress"><div id="progressBar"></div></div>
       </div>
 
+      <!-- Lista completa (solo para inspección) -->
+      <div class="muted">Lista (inspección). Tu estudio real es por “Lesson Session”.</div>
       <div class="list" id="lessonsList"></div>
     </div>
   </section>
@@ -150,39 +204,58 @@
 (function () {
   'use strict';
 
-  // Estado: palabras reservadas usadas aquí: const, let, function, return, if, for, switch, case, break, try, catch, new.
-  // No uses esos nombres como identificadores.
-
-  const STORAGE_KEY = 'keinap_jlpt_v2';
+  const STORAGE_KEY = 'keinap_jlpt_v3';
 
   /** @typedef {'ALL'|'N5'|'N4'|'N3'|'N2'|'N1'} Level */
   /** @typedef {{ id:string, text:string, level:Level, learned:boolean, createdAt:number, learnedAt:number|null, dueAt:number|null, reps:number, lastGrade:string|null }} Lesson */
-  /** @type {{ lessons: Lesson[], ui: { level: Level } }} */
-  let state = loadState();
+  /** @typedef {{ active:boolean, queueIds:string[], index:number, reveal:boolean, lastLevel:Level }} LessonSession */
 
   const LEVELS = /** @type {Level[]} */ (['ALL','N5','N4','N3','N2','N1']);
 
+  /** @type {{ lessons: Lesson[], ui: { level: Level }, session: LessonSession }} */
+  let state = loadState();
+
+  function mustEl(id) {
+    const node = document.getElementById(id);
+    if (!node) throw new Error('Falta elemento con id="' + id + '" en el HTML');
+    return node;
+  }
+
   const el = {
-    levelTabs: document.getElementById('levelTabs'),
-    newLessonLevel: document.getElementById('newLessonLevel'),
-    newLessonText: document.getElementById('newLessonText'),
-    addLessonBtn: document.getElementById('addLessonBtn'),
-    lessonsList: document.getElementById('lessonsList'),
-    statTotal: document.getElementById('statTotal'),
-    statLearned: document.getElementById('statLearned'),
-    progressLabel: document.getElementById('progressLabel'),
-    progressBar: document.getElementById('progressBar'),
+    levelTabs: mustEl('levelTabs'),
+    newLessonLevel: mustEl('newLessonLevel'),
+    newLessonText: mustEl('newLessonText'),
+    addLessonBtn: mustEl('addLessonBtn'),
+    lessonsList: mustEl('lessonsList'),
+    statTotal: mustEl('statTotal'),
+    statLearned: mustEl('statLearned'),
+    progressLabel: mustEl('progressLabel'),
+    progressBar: mustEl('progressBar'),
 
-    reviewPrompt: document.getElementById('reviewPrompt'),
-    reviewMeta: document.getElementById('reviewMeta'),
-    duePill: document.getElementById('duePill'),
-    queuePill: document.getElementById('queuePill'),
-    reviewButtons: document.getElementById('reviewButtons'),
+    reviewPrompt: mustEl('reviewPrompt'),
+    reviewMeta: mustEl('reviewMeta'),
+    duePill: mustEl('duePill'),
+    queuePill: mustEl('queuePill'),
+    reviewButtons: mustEl('reviewButtons'),
 
-    exportBtn: document.getElementById('exportBtn'),
-    importBtn: document.getElementById('importBtn'),
-    resetBtn: document.getElementById('resetBtn'),
-    backupArea: document.getElementById('backupArea'),
+    exportBtn: mustEl('exportBtn'),
+    importBtn: mustEl('importBtn'),
+    resetBtn: mustEl('resetBtn'),
+    backupArea: mustEl('backupArea'),
+
+    // Session UI
+    batchSize: mustEl('batchSize'),
+    startSessionBtn: mustEl('startSessionBtn'),
+    endSessionBtn: mustEl('endSessionBtn'),
+    sessionStatus: mustEl('sessionStatus'),
+    remainingPill: mustEl('remainingPill'),
+    sessionCounter: mustEl('sessionCounter'),
+    sessionFront: mustEl('sessionFront'),
+    revealBtn: mustEl('revealBtn'),
+    markLearnedNextBtn: mustEl('markLearnedNextBtn'),
+    skipItemBtn: mustEl('skipItemBtn'),
+    sessionReveal: mustEl('sessionReveal'),
+    sessionDetail: mustEl('sessionDetail'),
   };
 
   function nowMs() { return Date.now(); }
@@ -195,14 +268,20 @@
     return 'ALL';
   }
 
+  function defaultSession() {
+    /** @type {LessonSession} */
+    return { active:false, queueIds:[], index:0, reveal:false, lastLevel:'ALL' };
+  }
+
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { lessons: [], ui: { level: 'ALL' } };
+      if (!raw) return { lessons: [], ui: { level: 'ALL' }, session: defaultSession() };
 
       const parsed = JSON.parse(raw);
       const lessons = Array.isArray(parsed.lessons) ? parsed.lessons : [];
       const uiLevel = parsed.ui && parsed.ui.level ? normalizeLevel(parsed.ui.level) : 'ALL';
+      const session = parsed.session ? parsed.session : defaultSession();
 
       const cleaned = lessons.map((l) => ({
         id: String(l.id || uid()),
@@ -216,9 +295,18 @@
         lastGrade: l.lastGrade ? String(l.lastGrade) : null
       })).filter(l => l.text);
 
-      return { lessons: cleaned, ui: { level: uiLevel } };
+      /** @type {LessonSession} */
+      const sessionClean = {
+        active: Boolean(session.active),
+        queueIds: Array.isArray(session.queueIds) ? session.queueIds.map(String) : [],
+        index: Number.isFinite(session.index) ? Number(session.index) : 0,
+        reveal: Boolean(session.reveal),
+        lastLevel: normalizeLevel(session.lastLevel || uiLevel)
+      };
+
+      return { lessons: cleaned, ui: { level: uiLevel }, session: sessionClean };
     } catch {
-      return { lessons: [], ui: { level: 'ALL' } };
+      return { lessons: [], ui: { level: 'ALL' }, session: defaultSession() };
     }
   }
 
@@ -236,6 +324,10 @@
     const lvl = state.ui.level;
     if (lvl === 'ALL') return state.lessons;
     return state.lessons.filter(l => l.level === lvl);
+  }
+
+  function getNotLearnedFiltered() {
+    return getFilteredLessons().filter(l => !l.learned);
   }
 
   function addLesson(text, level) {
@@ -268,7 +360,7 @@
 
     if (lesson.learned) {
       lesson.learnedAt = nowMs();
-      lesson.dueAt = nowMs(); // due inmediato
+      lesson.dueAt = nowMs();
       lesson.reps = lesson.reps || 0;
       lesson.lastGrade = lesson.lastGrade || null;
     } else {
@@ -284,10 +376,110 @@
 
   function deleteLesson(id) {
     state.lessons = state.lessons.filter(l => l.id !== id);
+
+    // Si se borró una lección que estaba en sesión, la sesión se limpia para evitar referencias rotas.
+    if (state.session.active && state.session.queueIds.includes(id)) {
+      state.session = defaultSession();
+    }
+
     saveState();
     renderAll();
   }
 
+  // -----------------------------
+  // Lesson Session (rondas)
+  // -----------------------------
+  function startSession(batchSize) {
+    const lvl = state.ui.level;
+    if (lvl === 'ALL') {
+      // Permitir ALL sería mezclar niveles; lo bloqueo para que sea “tipo WaniKani”.
+      state.session = defaultSession();
+      state.session.active = false;
+      saveState();
+      renderAll();
+      return;
+    }
+
+    const pool = getNotLearnedFiltered();
+    const n = Math.max(1, Math.min(50, Number(batchSize) || 10));
+
+    // Selección estable: en orden de creación (createdAt asc), para que no sea aleatorio.
+    const queue = pool.slice().sort((a,b)=>a.createdAt-b.createdAt).slice(0, n).map(l => l.id);
+
+    state.session = {
+      active: queue.length > 0,
+      queueIds: queue,
+      index: 0,
+      reveal: false,
+      lastLevel: lvl
+    };
+
+    saveState();
+    renderAll();
+  }
+
+  function endSession() {
+    state.session = defaultSession();
+    saveState();
+    renderAll();
+  }
+
+  function getSessionLesson() {
+    if (!state.session.active) return null;
+    const id = state.session.queueIds[state.session.index];
+    if (!id) return null;
+    return state.lessons.find(l => l.id === id) || null;
+  }
+
+  function revealSession() {
+    if (!state.session.active) return;
+    state.session.reveal = true;
+    saveState();
+    renderAll();
+  }
+
+  function markLearnedAndNext() {
+    const lesson = getSessionLesson();
+    if (!lesson) return;
+
+    // Completar lección => pasa a learned y entra a Reviews
+    lesson.learned = true;
+    lesson.learnedAt = nowMs();
+    lesson.dueAt = nowMs();
+    lesson.reps = lesson.reps || 0;
+    lesson.lastGrade = lesson.lastGrade || null;
+
+    // avanzar
+    state.session.reveal = false;
+    state.session.index += 1;
+
+    // Fin de ronda
+    if (state.session.index >= state.session.queueIds.length) {
+      state.session = defaultSession();
+    }
+
+    saveState();
+    renderAll();
+  }
+
+  function skipSessionItem() {
+    if (!state.session.active) return;
+
+    // Skip: solo avanza sin marcar learned
+    state.session.reveal = false;
+    state.session.index += 1;
+
+    if (state.session.index >= state.session.queueIds.length) {
+      state.session = defaultSession();
+    }
+
+    saveState();
+    renderAll();
+  }
+
+  // -----------------------------
+  // Reviews
+  // -----------------------------
   function getLearnedFiltered() {
     return getFilteredLessons().filter(l => l.learned);
   }
@@ -327,6 +519,9 @@
     renderAll();
   }
 
+  // -----------------------------
+  // Render
+  // -----------------------------
   function renderTabs() {
     el.levelTabs.innerHTML = '';
     for (const lvl of LEVELS) {
@@ -337,8 +532,6 @@
       b.textContent = (lvl === 'ALL') ? 'Todos' : lvl;
       el.levelTabs.appendChild(b);
     }
-
-    // sincroniza el selector de "nuevo lesson" con el filtro (si el filtro es N*)
     if (state.ui.level !== 'ALL') el.newLessonLevel.value = state.ui.level;
   }
 
@@ -353,6 +546,73 @@
     const pct = total === 0 ? 0 : Math.round((learned / total) * 100);
     el.progressLabel.textContent = `${pct}% completado`;
     el.progressBar.style.width = `${pct}%`;
+  }
+
+  function renderSession() {
+    const lvl = state.ui.level;
+    const remaining = getNotLearnedFiltered().length;
+    el.remainingPill.textContent = `Remaining: ${remaining}`;
+
+    const session = state.session;
+
+    // Si cambiaste de nivel, la sesión no tiene sentido (tipo WaniKani).
+    if (session.active && session.lastLevel !== lvl) {
+      state.session = defaultSession();
+      saveState();
+    }
+
+    const active = state.session.active;
+    el.endSessionBtn.disabled = !active;
+    el.revealBtn.disabled = !active;
+    el.markLearnedNextBtn.disabled = !active;
+    el.skipItemBtn.disabled = !active;
+
+    if (lvl === 'ALL') {
+      el.startSessionBtn.disabled = true;
+      el.sessionStatus.textContent = 'Selecciona un nivel (N4 o N3) para empezar una ronda.';
+      el.sessionCounter.textContent = 'Item: - / -';
+      el.sessionFront.textContent = 'Presiona un nivel (N4/N3) arriba.';
+      el.sessionReveal.classList.remove('show');
+      el.sessionDetail.textContent = '-';
+      return;
+    }
+
+    el.startSessionBtn.disabled = false;
+
+    if (!active) {
+      el.sessionStatus.textContent = remaining > 0
+        ? `Listo para iniciar ronda en ${lvl}.`
+        : `No quedan lecciones “no learned” en ${lvl}.`;
+      el.sessionCounter.textContent = 'Item: - / -';
+      el.sessionFront.textContent = remaining > 0 ? 'Presiona Start.' : 'Sin lecciones pendientes.';
+      el.sessionReveal.classList.remove('show');
+      el.sessionDetail.textContent = '-';
+      return;
+    }
+
+    const current = getSessionLesson();
+    const idx = state.session.index + 1;
+    const total = state.session.queueIds.length;
+
+    el.sessionStatus.textContent = `Sesión activa (${lvl}).`;
+    el.sessionCounter.textContent = `Item: ${idx} / ${total}`;
+
+    if (!current) {
+      // Estado corrupto: limpiar
+      state.session = defaultSession();
+      saveState();
+      renderAll();
+      return;
+    }
+
+    el.sessionFront.textContent = current.text;
+
+    // Reveal: para no complicar parsing, mostramos el texto completo como “detalle”.
+    // Si luego quieres separar kanji/kana/meaning por columnas, se hace con parsing más estricto.
+    el.sessionDetail.textContent = current.text;
+
+    if (state.session.reveal) el.sessionReveal.classList.add('show');
+    else el.sessionReveal.classList.remove('show');
   }
 
   function renderLessonsList() {
@@ -433,7 +693,7 @@
 
     if (!next) {
       el.reviewPrompt.textContent = learned.length === 0
-        ? 'No hay items para repasar. Marca alguna lección como learned.'
+        ? 'No hay items para repasar. Completa una ronda de Lessons y marca learned.'
         : 'No hay items vencidos ahora. Vuelve cuando haya due.';
       el.reviewMeta.textContent = '';
       for (const b of el.reviewButtons.querySelectorAll('button')) b.disabled = true;
@@ -453,11 +713,14 @@
   function renderAll() {
     renderTabs();
     renderStats();
+    renderSession();
     renderLessonsList();
     renderReviews();
   }
 
+  // -----------------------------
   // Eventos
+  // -----------------------------
   el.levelTabs.addEventListener('click', function (ev) {
     const t = ev.target;
     if (!(t instanceof HTMLElement)) return;
@@ -505,6 +768,27 @@
     applyReviewGrade(id, grade);
   });
 
+  // Session events
+  el.startSessionBtn.addEventListener('click', function () {
+    startSession(el.batchSize.value);
+  });
+
+  el.endSessionBtn.addEventListener('click', function () {
+    endSession();
+  });
+
+  el.revealBtn.addEventListener('click', function () {
+    revealSession();
+  });
+
+  el.markLearnedNextBtn.addEventListener('click', function () {
+    markLearnedAndNext();
+  });
+
+  el.skipItemBtn.addEventListener('click', function () {
+    skipSessionItem();
+  });
+
   // Backup
   el.exportBtn.addEventListener('click', function () {
     el.backupArea.value = JSON.stringify(state, null, 2);
@@ -532,7 +816,7 @@
 
       const uiLevel = parsed.ui && parsed.ui.level ? normalizeLevel(parsed.ui.level) : state.ui.level;
 
-      state = { lessons: cleaned, ui: { level: uiLevel } };
+      state = { lessons: cleaned, ui: { level: uiLevel }, session: defaultSession() };
       saveState();
       renderAll();
     } catch {
@@ -541,7 +825,7 @@
   });
 
   el.resetBtn.addEventListener('click', function () {
-    state = { lessons: [], ui: { level: 'ALL' } };
+    state = { lessons: [], ui: { level: 'ALL' }, session: defaultSession() };
     saveState();
     el.backupArea.value = '';
     renderAll();
