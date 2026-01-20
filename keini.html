@@ -348,22 +348,22 @@ var(--bg);">
 
         <div class="row" id="answerRow" style="display:none;">
           <input id="answerInput" placeholder="Respuesta…" style="flex:1" />
-          <button id="answerBtn" type="button" onclick="try{kkAnswerReview();}catch(e){console.error(e);}">Answer</button>
-          <button id="showBtn" type="button" onclick="try{kkShowReview();}catch(e){console.error(e);}">Show</button>
+          <button id="answerBtn">Answer</button>
+          <button id="showBtn">Show</button>
         </div>
 
         <div class="row" id="gradeRow" style="display:none; margin-top:10px;">
-          <button id="againBtn" type="button" onclick="try{kkGradeReview(\'again\');}catch(e){console.error(e);}">Again</button>
-          <button id="hardBtn" type="button" onclick="try{kkGradeReview(\'hard\');}catch(e){console.error(e);}">Hard</button>
-          <button id="goodBtn" type="button" onclick="try{kkGradeReview(\'good\');}catch(e){console.error(e);}">Good</button>
-          <button id="easyBtn" type="button" onclick="try{kkGradeReview(\'easy\');}catch(e){console.error(e);}">Easy</button>
-          <button id="skipBtn" type="button" onclick="try{kkGradeReview(\'skip\');}catch(e){console.error(e);}">Skip</button>
+          <button id="againBtn">Again</button>
+          <button id="hardBtn">Hard</button>
+          <button id="goodBtn">Good</button>
+          <button id="easyBtn">Easy</button>
+          <button id="skipBtn">Skip</button>
         </div>
 
         <div class="row" id="lessonRow" style="display:none; margin-top:10px;">
-          <button id="nextLessonBtn" onclick="try{nextLesson();}catch(e){console.error(e);}">Next</button>
-          <button id="markLearnedBtn" onclick="try{markLearned();}catch(e){console.error(e);}">Mark Learned</button>
-          <button id="exitLessonsBtn" onclick="try{exitLessons();}catch(e){console.error(e);}">Exit</button>
+          <button id="nextLessonBtn">Next</button>
+          <button id="markLearnedBtn">Mark Learned</button>
+          <button id="exitLessonsBtn">Exit</button>
         </div>
 
         <div class="hr"></div>
@@ -2144,52 +2144,6 @@ init();
     <div class="sub">Perfil</div>
   </div>
 </div>
-
-
-<script>
-/* Expose lesson controls to window */
-(function(){
-  try{
-    if(typeof nextLesson==="function") window.nextLesson = nextLesson;
-    if(typeof markLearned==="function") window.markLearned = markLearned;
-    if(typeof exitLessons==="function") window.exitLessons = exitLessons;
-  }catch(e){ console.error(e); }
-})();
-</script>
-
-
-<script>
-/* ===== KK Reviews Bulletproof ===== */
-(function(){
-  function curItem(){
-    try{ return (window.session && session.queue && session.queue[session.idx]) ? session.queue[session.idx] : null; }
-    catch(_){ return null; }
-  }
-  window.kkAnswerReview = function(){
-    const it = curItem(); if(!it) return;
-    try{
-      const ok = checkAnswer((ui.answerInput.value||""), it);
-      ui.feedback.innerHTML = ok
-        ? '<span class="ok">Correcto.</span>'
-        : '<span class="bad">Incorrecto.</span> Pulsa Show y luego califica.';
-      if(ok && typeof kkShowPop==="function") kkShowPop();
-      renderExamples(it);
-    }catch(e){ console.error(e); }
-  };
-  window.kkShowReview = function(){
-    const it = curItem(); if(!it) return;
-    try{ showAnswer(it); }catch(e){ console.error(e); }
-  };
-  window.kkGradeReview = function(g){
-    const it = curItem(); if(!it) return;
-    try{
-      if(g!=="again" && typeof kkShowPop==="function") kkShowPop();
-      grade(it, g);
-      nextReview();
-    }catch(e){ console.error(e); }
-  };
-})();
-</script>
 
 </body>
 </html>
