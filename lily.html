@@ -1,0 +1,2161 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Keini Kani</title>
+<style>
+:root{
+  --bg:#f3f3f6;
+  --panel:rgba(255,255,255,.92);
+  --panel2:rgba(255,255,255,.70);
+  --border:rgba(0,0,0,.10);
+  --text:#1f1f2b;
+  --muted:rgba(31,31,43,.64);
+  --good:#1a7f4b;
+  --bad:#b42318;
+  --accent:#ff0096;   /* WaniKani-ish pink */
+  --accent2:#7c3aed;  /* purple */
+  --shadow:0 16px 46px rgba(0,0,0,.10);
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
+body{
+  margin:0;color:var(--text);
+  background:
+    radial-gradient(1200px 900px at 10% -10%, rgba(255,0,150,.18), transparent 60%),
+    radial-gradient(1000px 800px at 90% 10%, rgba(124,58,237,.16), transparent 55%),
+    radial-gradient(900px 700px at 60% 100%, rgba(255,0,150,.10), transparent 60%),
+    var(--bg);
+}
+.app{min-height:100vh;display:grid;grid-template-columns:300px 1fr}
+@media (max-width:980px){.app{grid-template-columns:1fr}.sidebar{position:sticky;top:0;z-index:10}}
+.sidebar{padding:16px;box-sizing:border-box;border-right:1px solid rgba(0,0,0,.08);
+  background:linear-gradient(180deg, rgba(255,0,150,.18), rgba(124,58,237,.10));backdrop-filter:blur(10px);}
+.brand{padding:14px;border:1px solid var(--border);border-radius:18px;background:var(--panel);box-shadow:var(--shadow)}
+.brand .title{font-weight:950;letter-spacing:.2px}
+.brand .sub{margin-top:6px;color:var(--muted);font-size:12.5px;line-height:1.4}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.pill{font-size:12px;color:var(--muted);padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:rgba(10,10,16,.55)}
+.pill select{background:transparent;border:none;color:var(--text);outline:none;font-size:12px}
+.nav{margin-top:14px;display:grid;gap:10px}
+.nav button{width:100%;text-align:left;padding:12px;border-radius:16px;cursor:pointer;
+  background:rgba(255,255,255,.72);border:1px solid var(--border);color:var(--text)}
+.nav button.active{border-color:rgba(255,0,150,.85);box-shadow:0 0 0 3px rgba(255,0,150,.18)}
+.nav .hint{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.notice{margin-top:12px;padding:12px;border-radius:16px;border:1px solid rgba(139,92,246,.35);
+  background:rgba(139,92,246,.12);font-size:12px;line-height:1.45;color:var(--text)}
+.content{padding:20px;box-sizing:border-box}
+.grid{max-width:1180px;margin:0 auto;display:grid;gap:14px;grid-template-columns:1.25fr .75fr}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 10px;font-size:14px;letter-spacing:.2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button,input,select,textarea{background:rgba(255,255,255,.80);color:var(--text);border:1px solid var(--border);
+  border-radius:16px;padding:10px 12px;font-size:14px;outline:none}
+button{cursor:pointer} button:hover{border-color:rgba(255,0,150,.35)} button:disabled{opacity:.5;cursor:not-allowed}
+input{min-width:220px} textarea{width:100%;min-height:120px;resize:vertical}
+.prompt{display:grid;gap:10px;padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:var(--panel2)}
+.big{font-size:54px;font-weight:950;letter-spacing:.4px;line-height:1.02;margin:0}
+.meta{color:var(--muted);font-size:12.5px;line-height:1.5;margin:0}
+.hr{height:1px;background:rgba(255,255,255,.06);margin:12px 0}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.ok{color:var(--good)} .bad{color:var(--bad)}
+.tag{display:inline-block;font-size:11px;color:var(--muted);border:1px solid var(--border);
+  border-radius:999px;padding:4px 8px;background:rgba(0,0,0,.12);margin-right:6px}
+.infoGrid{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+@media (max-width:600px){.infoGrid{grid-template-columns:1fr}}
+.infoBox{padding:12px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.18)}
+.infoBox .label{font-size:12px;color:var(--muted)}
+.infoBox .val{margin-top:6px;font-size:20px;font-weight:900;line-height:1.15}
+.infoBox .valSmall{margin-top:6px;font-size:16px;font-weight:800;line-height:1.2}
+.mnemo{margin-top:10px;padding:12px;border-radius:18px;border:1px solid rgba(34,211,238,.30);background:rgba(34,211,238,.10)}
+.mnemo .label{font-size:12px;color:var(--muted)} .mnemo .text{margin-top:6px;font-size:14px;line-height:1.55}
+.examples{margin-top:12px;padding:12px;border-radius:18px;border:1px solid var(--border);background:rgba(0,0,0,.18)}
+.examples h3{margin:0 0 8px;font-size:13px}
+.exline{margin:8px 0}
+.small{font-size:12px;color:var(--muted)}
+.lessonPicker{margin-top:12px;padding:12px;border-radius:18px;border:1px solid var(--border);background:rgba(0,0,0,.18)}
+.lessonPicker h3{margin:0 0 8px;font-size:13px}
+.lpGrid{display:grid;gap:8px}
+.lpItem{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px;border-radius:16px;
+  border:1px solid rgba(255,255,255,.06);background:rgba(10,10,16,.35)}
+.lpLeft{display:flex;flex-direction:column;gap:4px;min-width:0}
+.lpJp{font-weight:900;letter-spacing:.2px}
+.lpMeta{font-size:12px;color:var(--muted)}
+.lpBtns{display:flex;gap:8px;align-items:center}
+.lpBtns button{padding:8px 10px;border-radius:14px;font-size:12px}
+.lpChip{font-size:11px;color:var(--muted);padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:rgba(0,0,0,.10);white-space:nowrap}
+.lpItem.active{border-color:rgba(139,92,246,.75);box-shadow:0 0 0 3px rgba(139,92,246,.14)}
+.lpItem.learned{opacity:.55}
+.lpItem .lpJp,.lpItem .lpMeta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ruby{ruby-position:over} rt{font-size:.62em;color:var(--muted)}
+.kpi{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.kpi .k{padding:12px;border-radius:18px;border:1px solid var(--border);background:rgba(0,0,0,.18)}
+.k .label{font-size:12px;color:var(--muted)} .k .val{margin-top:6px;font-size:18px;font-weight:950}
+.progress{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(255,255,255,.06)}
+.bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+/* Grammar */
+.grammarWrap{max-width:1180px;margin:0 auto;display:none}
+.gGrid{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+@media (max-width:1100px){.gGrid{grid-template-columns:1fr}}
+.gList{max-height:420px;overflow:auto}
+.gItem{padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:rgba(10,10,16,.35);cursor:pointer}
+.gItem.active{border-color:rgba(34,211,238,.65);box-shadow:0 0 0 3px rgba(34,211,238,.14)}
+.gTitle{font-weight:900}
+.gDesc{margin-top:6px;color:var(--muted);font-size:12.5px;line-height:1.45}
+.cloze{font-size:22px;font-weight:900;line-height:1.35}
+.hintBox{margin-top:10px;padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.18)}
+
+}
+.success-pop{
+  position:fixed; inset:0;
+  display:none; place-items:center;
+  z-index:60; pointer-events:none;
+}
+.success-pop.show{display:grid}
+.success-badge{
+  width:92px; height:92px; border-radius:28px;
+  background:rgba(26,127,75,.12);
+  border:1px solid rgba(26,127,75,.22);
+  display:grid; place-items:center;
+  box-shadow:0 22px 70px rgba(26,127,75,.18);
+  animation:kkPop .55s ease-out forwards;
+}
+.success-badge svg{width:52px;height:52px}
+@keyframes kkPop{
+  0%{transform:translateY(10px) scale(.6); opacity:0}
+  55%{transform:translateY(0) scale(1.08); opacity:1}
+  100%{transform:translateY(-6px) scale(1); opacity:0}
+}
+
+
+#kkErr{position:fixed;left:12px;right:12px;bottom:12px;z-index:10000;display:none;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.95);border:1px solid rgba(0,0,0,.12);box-shadow:0 10px 26px rgba(0,0,0,.12);font-size:12.5px;color:#111;}
+
+/* Click safety */
+#kkSwitchProfileBtn{ position:relative; z-index:5; pointer-events:auto; }
+#sidebar{ position:relative; z-index:4; }
+
+
+/* Profile fixed badge */
+#kkProfileFixed{
+  position:fixed;top:14px;right:14px;z-index:9000;
+  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:999px;
+  border:1px solid rgba(0,0,0,.10);background:rgba(255,255,255,.92);
+  box-shadow:0 10px 26px rgba(0,0,0,.10);backdrop-filter:blur(8px);
+}
+#kkProfileFixed img{ width:34px;height:34px;border-radius:10px;object-fit:cover;display:block;border:1px solid rgba(0,0,0,.10); }
+#kkProfileFixed .name{ font-weight:900; font-size:13.5px; line-height:1; }
+#kkProfileFixed .sub{ font-size:11.5px; color:var(--muted); line-height:1; margin-top:2px; }
+
+</style>
+</head>
+<body>
+
+<div id="kkProfileGate" style="position:fixed;inset:0;z-index:9999;display:none;pointer-events:auto;
+background:radial-gradient(1200px 900px at 10% -10%, rgba(255,0,150,.18), transparent 60%),
+radial-gradient(1000px 800px at 90% 10%, rgba(124,58,237,.16), transparent 55%),
+radial-gradient(900px 700px at 60% 100%, rgba(255,0,150,.10), transparent 60%),
+var(--bg);">
+  <div style="max-width:980px;margin:0 auto;padding:36px 18px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:950;font-size:28px;letter-spacing:.2px;">¿Quién va a estudiar? ❤️</div>
+        <div style="color:var(--muted);margin-top:6px;">Perfil = nombre + avatar. (Progreso global por ahora)</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button id="kkManageBtn" onclick="/*fallback*/">Administrar</button>
+        <button id="kkCloseGateBtn" onclick="window.kkProfilesClose && window.kkProfilesClose()">Cerrar</button>
+      </div>
+    </div>
+
+    <div id="kkProfilesGrid" style="margin-top:22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;"></div>
+
+    <div id="kkProfileEditor" style="display:none;margin-top:26px;padding:16px;border-radius:20px;border:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow);">
+      <div style="font-weight:900;">Crear / editar perfil</div>
+      <div style="color:var(--muted);font-size:12.5px;margin-top:6px;">Nombre + imagen desde tu dispositivo.</div>
+      <div style="height:1px;background:rgba(0,0,0,.06);margin:12px 0;"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div id="kkAvatarPreview" style="width:92px;height:92px;border-radius:18px;border:1px solid var(--border);background:rgba(255,255,255,.7);display:grid;place-items:center;overflow:hidden;">
+          <div style="font-weight:900;color:var(--muted);">IMG</div>
+        </div>
+        <div style="flex:1;min-width:240px;display:grid;gap:10px;">
+          <input id="kkProfileName" placeholder="Nombre de usuario" />
+          <input id="kkProfileImage" type="file" accept="image/*" />
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button id="kkSaveProfileBtn">Guardar</button>
+            <button id="kkDeleteProfileBtn">Eliminar</button>
+            <button id="kkCancelProfileBtn">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div id="kkEditorNote" style="margin-top:10px;color:var(--muted);font-size:12.5px;"></div>
+    </div>
+  </div>
+</div>
+
+
+
+      <div id="kkEditorNote" style="margin-top:10px;color:var(--muted);font-size:12.5px;"></div>
+    </div>
+  </div>
+</div>
+
+
+<div id="profileGate" style="position:fixed;inset:0;z-index:9999;display:none;background:
+radial-gradient(1200px 900px at 15% -10%, rgba(124,58,237,.22), transparent 60%),
+radial-gradient(1000px 800px at 90% 10%, rgba(219,39,119,.16), transparent 55%),
+radial-gradient(900px 700px at 60% 100%, rgba(34,211,238,.10), transparent 60%),
+var(--bg);">
+  <div style="max-width:980px;margin:0 auto;padding:36px 18px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:950;font-size:28px;letter-spacing:.2px;">¿Quién va a estudiar? ❤️</div>
+        <div style="color:var(--muted);margin-top:6px;">Cada perfil guarda su progreso por separado.</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;"><button id="manageProfilesBtn">Administrar</button><button id="closeProfilesBtn">Cerrar</button></div>
+    </div>
+
+    <div id="profilesGrid" style="margin-top:22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;"></div>
+
+    <div id="profileEditor" style="display:none;margin-top:26px;padding:16px;border-radius:20px;border:1px solid var(--border);background:var(--panel);box-shadow:var(--shadow);">
+      <div style="font-weight:900;">Crear / editar perfil</div>
+      <div style="color:var(--muted);font-size:12.5px;margin-top:6px;">Nombre + imagen desde tu dispositivo.</div>
+      <div style="height:1px;background:rgba(255,255,255,.08);margin:12px 0;"></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div id="avatarPreview" style="width:92px;height:92px;border-radius:18px;border:1px solid var(--border);background:rgba(255,255,255,.7);display:grid;place-items:center;overflow:hidden;">
+          <div style="font-weight:900;color:var(--muted);">IMG</div>
+        </div>
+        <div style="flex:1;min-width:240px;display:grid;gap:10px;">
+          <input id="profileNameInput" placeholder="Nombre de usuario" />
+          <input id="profileImageInput" type="file" accept="image/*" />
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button id="saveProfileBtn">Guardar</button>
+            <button id="cancelProfileBtn">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div id="profileEditorNote" style="margin-top:10px;color:var(--muted);font-size:12.5px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div style="display:flex;align-items:center;gap:10px;"><svg width="170" height="44" viewBox="0 0 170 44" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Keini Kani">
+  <defs>
+    <linearGradient id="kkG2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <g fill="none">
+    <circle cx="22" cy="22" r="21" fill="url(#kkG2)" opacity="0.95"/>
+    <path d="M14 30V14h3.4v6.4l5.9-6.4h4.4l-6.8 7.1 7.3 8.9h-4.5l-5.3-6.6-1 1.1V30H14Z" fill="#f8fafc"/>
+    <text x="54" y="28.5" font-family="ui-rounded, system-ui, -apple-system, Segoe UI, Roboto" font-weight="900" font-size="18" fill="#1d1630">Keini Kani</text>
+  </g>
+</svg><div><div class="title">Keini Kani ❤️</div>
+      <div class="sub">Vocab/Verbos: solo N4 y N3. Gramática: N5 → N1.</div>
+      </div></div>
+      <div class="pills">
+        <div class="pill" id="clockPill">—</div>
+        <div class="pill" id="levelPill">Level: —</div>
+        <div class="pill" id="duePill">Due: —</div>
+        <div class="pill">Study:
+          <select id="studyJlpt">
+            <option value="ALL">ALL</option>
+            <option value="N5">N5</option>
+            <option value="N4" selected>N4</option>
+            <option value="N3">N3</option>
+            <option value="N2">N2</option>
+            <option value="N1">N1</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <button id="tabLessons" class="active">Lessons<span class="hint">Aprende vocab/verbos</span></button>
+      <button id="tabReviews">Reviews<span class="hint">SRS de vocab/verbos</span></button>
+      <button id="tabGrammar">Grammar<span class="hint">Teoría + cloze</span></button>
+      <button id="tabDeck">Deck<span class="hint">Añadir / Importar / Exportar</span></button>
+    </div>
+    <div class="notice">
+      <div class="row" style="margin-top:8px;"><button id="kkSwitchProfileBtn" onclick="window.kkProfilesOpen && window.kkProfilesOpen()">Cambiar perfil</button></div>
+      Ahora hay vocab/verbos para N5–N1. Grammar sigue disponible para todos los niveles.
+      
+    </div>
+  </aside>
+
+  <main class="content">
+    <!-- Vocab/Review area -->
+    <div class="grid" id="vrGrid">
+      <section class="card">
+        
+
+<h2 id="mainTitle">Lessons</h2>
+<div class="row" style="margin-top:6px;">
+  <label class="small">Nivel (vocab)</label>
+  <select id="lessonStudy">
+    <option value="ALL">ALL</option>
+    <option value="N4">N4</option>
+    <option value="N3">N3</option>
+    <option value="N5">N5</option>
+    <option value="N2">N2</option>
+    <option value="N1">N1</option>
+  </select>
+  <span class="small">N5/N2/N1: usa Grammar</span>
+</div>
+
+<div class="row" style="margin-top:6px;">
+  <label class="small">Nivel (vocab)</label>
+  <select id="lessonStudy">
+    <option value="ALL">ALL</option>
+    <option value="N4">N4</option>
+    <option value="N3">N3</option>
+    <option value="N5">N5</option>
+    <option value="N2">N2</option>
+    <option value="N1">N1</option>
+  </select>
+  <span class="small">N5/N2/N1: usa Grammar</span>
+</div>
+
+
+        <div class="prompt">
+          <div class="big" id="promptMain">—</div>
+          <div class="meta" id="promptTags">—</div>
+
+          <div class="infoGrid" id="infoGrid" style="display:none;">
+            <div class="infoBox">
+              <div class="label">ふりがな</div>
+              <div class="valSmall mono" id="furiganaBig">—</div>
+            </div>
+            <div class="infoBox">
+              <div class="label">Significado</div>
+              <div class="val" id="meaningBig">—</div>
+            </div>
+          </div>
+
+          <div class="mnemo" id="mnemoBox" style="display:none;">
+            <div class="label">Mnemotecnia</div>
+            <div class="text" id="mnemoText">—</div>
+          </div>
+
+          <div class="meta" id="promptNote">—</div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row" id="answerRow" style="display:none;">
+          <input id="answerInput" placeholder="Respuesta…" style="flex:1" />
+          <button id="answerBtn">Answer</button>
+          <button id="showBtn">Show</button>
+        </div>
+
+        <div class="row" id="gradeRow" style="display:none; margin-top:10px;">
+          <button id="againBtn">Again</button>
+          <button id="hardBtn">Hard</button>
+          <button id="goodBtn">Good</button>
+          <button id="easyBtn">Easy</button>
+          <button id="skipBtn">Skip</button>
+        </div>
+
+        <div class="row" id="lessonRow" style="display:none; margin-top:10px;">
+          <button id="nextLessonBtn" onclick="try{nextLesson();}catch(e){console.error(e);}">Next</button>
+          <button id="markLearnedBtn" onclick="try{markLearned();}catch(e){console.error(e);}">Mark Learned</button>
+          <button id="exitLessonsBtn" onclick="try{exitLessons();}catch(e){console.error(e);}">Exit</button>
+        </div>
+
+        <div class="hr"></div>
+        <div class="meta" id="feedback">Selecciona una pestaña y empieza.</div>
+
+        <div id="examplesBox" class="examples" style="display:none;">
+          <h3>Ejemplos</h3>
+          <div id="examplesList"></div>
+          <div class="small" style="margin-top:8px;">Formato: <span class="mono">漢字(かな)</span> → furigana arriba.</div>
+        </div>
+
+        <div id="lessonPicker" class="lessonPicker" style="display:none;">
+          <h3>Ítems de esta sesión</h3>
+          <div class="lpGrid" id="lpGrid"></div>
+          <div class="small" style="margin-top:8px;">“View” para re-ver. Mark Learned solo lo desbloquea para Reviews.</div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h2>Estado</h2>
+        <div class="kpi">
+          <div class="k"><div class="label">Items totales</div><div class="val" id="kTotal">—</div></div>
+          <div class="k"><div class="label">Aprendidos</div><div class="val" id="kLearned">—</div></div>
+          <div class="k"><div class="label">Due</div><div class="val" id="kDue">—</div></div>
+          <div class="k"><div class="label">Mastered</div><div class="val" id="kMastered">—</div></div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="meta">Progreso de nivel (vocab)</div>
+        <div class="progress"><div class="bar" id="levelBar"></div></div>
+        <div class="small" style="margin-top:8px;" id="levelDetail">—</div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <button id="resetProgressBtn">Reset Progress</button>
+          <button id="wipeAllBtn">Wipe All</button>
+        </div>
+
+        <div class="hr"></div>
+        <div class="small mono" id="storeInfo">—</div>
+      </aside>
+    </div>
+
+    <!-- Grammar area -->
+    <div class="grammarWrap" id="grammarWrap">
+      <div class="gGrid">
+        <section class="card">
+          <h2>Gramática — Teoría</h2>
+          <div class="row">
+            <label class="small">Nivel</label>
+            <select id="gLevel">
+              <option value="N5">N5</option>
+              <option value="N4">N4</option>
+              <option value="N3" selected>N3</option>
+              <option value="N2">N2</option>
+              <option value="N1">N1</option>
+            </select>
+            <button id="gRandom">Random</button>
+          </div>
+          <div class="hr"></div>
+          <div class="gList" id="gList"></div>
+        </section>
+
+        <section class="card">
+          <h2>Gramática — Práctica (cloze)</h2>
+
+          <div class="prompt">
+            <div class="cloze" id="gSentence">—</div>
+            <div class="meta" id="gPromptMeta">—</div>
+            <div class="hintBox" id="gTheoryBox" style="display:none;">
+              <div class="meta" id="gTheoryText">—</div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="row">
+            <input id="gAnswer" placeholder="Completa el hueco…" style="flex:1" />
+            <button id="gCheck">Check</button>
+            <button id="gShow">Show</button>
+            <button id="gNext">Next</button>
+          </div>
+
+          <div class="hr"></div>
+          <div class="meta" id="gFeedback">—</div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Deck -->
+    <section class="card" id="deckCard" style="max-width:1180px; margin:14px auto 0; display:none;">
+      <h2>Deck (vocab/verbos)</h2>
+      <div class="notice" style="margin:0 0 12px;">
+        Deck ahora acepta N5–N1. Grammar sigue siendo el eje para patrones y práctica.
+      </div>
+
+      <div class="row">
+        <label class="small">Lessons por sesión</label>
+        <input id="lessonSize" type="number" min="1" max="50" value="10" style="width:100px;" />
+        <label class="small">Reviews por sesión</label>
+        <input id="reviewSize" type="number" min="1" max="100" value="20" style="width:100px;" />
+        <label class="small">Strict</label>
+        <select id="strictness"><option value="lenient">Lenient</option><option value="strict">Strict</option></select>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>Add Item</h2>
+      <div class="meta">Añade mnemotecnia simple. Ejemplos: <span class="mono">漢字(かな)</span>.</div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <select id="itemJlpt"><option value="N4">N4</option><option value="N3">N3</option></select>
+        <input id="itemLevel" type="number" min="1" max="60" value="1" style="width:100px" />
+        <select id="itemType"><option value="vocab">Vocab</option><option value="verb">Verb</option><option value="adj-i">Adj い</option><option value="adj-na">Adj な</option></select>
+        <input id="jp" placeholder="Japonés (例: 認める)" style="flex:1" />
+      </div>
+
+      <div class="row">
+        <input id="furigana" placeholder="Furigana (例: みとめる)" style="flex:1" />
+        <input id="meaning" placeholder="Significado (例: reconocer / admitir)" style="flex:1" />
+      </div>
+
+      <div class="row">
+        <input id="mnemonic" placeholder="Mnemotecnia (ej: 'mi-TO-me: lo admito')" style="flex:1" />
+      </div>
+
+      <textarea id="examples" placeholder="Ejemplos (1 por línea)
+失敗(しっぱい)を認(みと)めました。 — Admití el error。"></textarea>
+
+      <div class="row"><button id="addBtn">Add</button></div>
+
+      <div class="hr"></div>
+
+      <h2>Import / Export</h2>
+      <div class="meta">JSON: <span class="mono">[{jlpt,level,type,jp,furigana,meaning,mnemonic,examples:[...]}, ...]</span></div>
+
+      <textarea id="importBox" placeholder='[{"jlpt":"N3","level":2,"type":"verb","jp":"避ける","furigana":"さける","meaning":"evitar","mnemonic":"sa-KERU: sácalo del camino","examples":["混雑(こんざつ)を避(さ)けます。 — Evito las multitudes。"]}]'></textarea>
+      <div class="row"><button id="importBtn">Import</button><button id="exportBtn">Export</button></div>
+    </section>
+  </main>
+</div>
+
+<script>
+
+
+
+/* ===== Ultra fallback: Profiles open/close/render independent of module ===== */
+(function(){
+  const PREFIX="keini_kani";
+  const PROFILES_KEY = PREFIX + ":profiles_simple";
+  const ACTIVE_KEY = PREFIX + ":active_profile_simple";
+
+  function q(id){ return document.getElementById(id); }
+  function loadProfiles(){
+    try{ const raw=localStorage.getItem(PROFILES_KEY); if(!raw) return []; const p=JSON.parse(raw); return Array.isArray(p)?p:[]; }catch{ return []; }
+  }
+  function saveProfiles(p){
+    try{ localStorage.setItem(PROFILES_KEY, JSON.stringify(p)); return true; }catch(e){ console.error(e); alert("No se pudo guardar el perfil (almacenamiento lleno/bloqueado)."); return false; }
+  }
+  function setActive(pid){ try{ localStorage.setItem(ACTIVE_KEY, pid); }catch(_){} }
+  function avatarDefault(name){
+    const txt=(name||"KK").slice(0,2).toUpperCase();
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ff0096"/><stop offset="1" stop-color="#7c3aed"/>
+      </linearGradient></defs>
+      <rect width="220" height="220" rx="44" fill="url(#g)"/>
+      <text x="110" y="135" font-family="system-ui,Segoe UI,Roboto" font-size="86" font-weight="900" text-anchor="middle" fill="#fff">${txt}</text>
+    </svg>`;
+    return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+  }
+
+  async function imgSmall(file){
+    const img=new Image(); const tmp=URL.createObjectURL(file);
+    try{
+      await new Promise((res, rej)=>{ img.onload=res; img.onerror=rej; img.src=tmp; });
+      const max=256, ratio=Math.min(1, max/Math.max(img.width,img.height));
+      const w=Math.max(1, Math.round(img.width*ratio));
+      const h=Math.max(1, Math.round(img.height*ratio));
+      const c=document.createElement("canvas"); c.width=w; c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      try{ return c.toDataURL("image/webp",0.82);}catch(_){ return c.toDataURL("image/png");}
+    } finally { URL.revokeObjectURL(tmp); }
+  }
+
+  let editing="";
+  let manage=false;
+
+  function fbRender(){
+    const grid=q("kkProfilesGrid"); if(!grid) return;
+    const profiles=loadProfiles();
+    const cards = profiles.map(p=>{
+      const img=p.avatar||avatarDefault(p.name);
+      const controls = manage ? `
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+          <button data-fb-edit="${p.id}" style="padding:8px 10px;border-radius:14px;">Editar</button>
+          <button data-fb-del="${p.id}" style="padding:8px 10px;border-radius:14px;">Eliminar</button>
+        </div>` : ``;
+      return `
+        <div class="card" style="text-align:center;cursor:pointer;padding:14px;" data-fb-pid="${p.id}">
+          <div style="width:120px;height:120px;margin:0 auto;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:rgba(255,255,255,.6);">
+            <img alt="${(p.name||"")}" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+          </div>
+          <div style="margin-top:10px;font-weight:900;">${(p.name||"")}</div>
+          ${controls}
+        </div>`;
+    }).join("");
+
+    const add = `
+      <div class="card" style="text-align:center;cursor:pointer;padding:14px;border-style:dashed;" id="fbAdd">
+        <div style="width:120px;height:120px;margin:0 auto;border-radius:18px;display:grid;place-items:center;border:1px dashed var(--border);background:rgba(255,255,255,.4);">
+          <div style="font-size:56px;font-weight:900;color:var(--muted);">+</div>
+        </div>
+        <div style="margin-top:10px;font-weight:900;color:var(--muted);">Agregar</div>
+      </div>`;
+    grid.innerHTML = cards + add;
+  }
+
+  function editorOpen(pid){
+    editing = pid || "";
+    const box=q("kkProfileEditor"), note=q("kkEditorNote"), name=q("kkProfileName"), preview=q("kkAvatarPreview"), file=q("kkProfileImage");
+    if(!box||!note||!name||!preview||!file) return;
+    box.style.display="block";
+    file.value="";
+    preview.dataset.img="";
+    if(pid){
+      const p=loadProfiles().find(x=>x.id===pid);
+      name.value=p?.name||"";
+      const img=p?.avatar||avatarDefault(name.value||"KK");
+      preview.innerHTML=`<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+      note.textContent="Editando perfil.";
+    }else{
+      name.value="";
+      preview.innerHTML=`<div style="font-weight:900;color:var(--muted);">IMG</div>`;
+      note.textContent="Creando perfil nuevo.";
+    }
+  }
+  function editorClose(){
+    const box=q("kkProfileEditor"); if(box) box.style.display="none";
+    const note=q("kkEditorNote"); if(note) note.textContent="";
+    const preview=q("kkAvatarPreview"); if(preview) preview.dataset.img="";
+    editing="";
+  }
+
+  function open(){
+    const gate=q("kkProfileGate"); if(!gate) return;
+    gate.style.display="block";
+    editorClose();
+    fbRender();
+  }
+  function close(){
+    const gate=q("kkProfileGate"); if(!gate) return;
+    gate.style.display="none";
+    editorClose();
+  }
+
+  function save(){
+    const name=(q("kkProfileName")?.value||"").trim();
+    const note=q("kkEditorNote");
+    if(!name){ if(note) note.textContent="Nombre requerido."; return; }
+    const preview=q("kkAvatarPreview");
+    const img=preview?.dataset?.img||"";
+    const profiles=loadProfiles();
+    let pid=editing;
+    if(pid){
+      const i=profiles.findIndex(p=>p.id===pid);
+      if(i>=0){ profiles[i].name=name; if(img) profiles[i].avatar=img; if(!profiles[i].avatar) profiles[i].avatar=avatarDefault(name); }
+    }else{
+      pid=(crypto?.randomUUID?crypto.randomUUID():String(Date.now())+Math.random());
+      profiles.push({id:pid,name,avatar:img||avatarDefault(name)});
+    }
+    if(!saveProfiles(profiles)) return;
+    setActive(pid);
+    close();
+  }
+
+  // Expose + bind
+  window.kkProfilesOpen = open;
+  window.kkProfilesClose = close;
+
+  // Hard bindings (no dependency on other code)
+  document.addEventListener("click",(e)=>{
+    const t=e.target;
+    const btn = t?.closest?.("#kkSwitchProfileBtn");
+    if(btn){ e.preventDefault(); open(); return; }
+    if(t?.closest?.("#kkCloseGateBtn")){ e.preventDefault(); close(); return; }
+    if(t?.closest?.("#kkManageBtn")){ e.preventDefault(); manage=!manage; const b=document.getElementById("kkManageBtn"); if(b) b.textContent=manage?"Listo":"Administrar"; editorClose(); fbRender(); return; }
+    if(t?.closest?.("#kkSaveProfileBtn")){ e.preventDefault(); save(); return; }
+    if(t?.closest?.("#kkCancelProfileBtn")){ e.preventDefault(); editorClose(); return; }
+    if(t?.closest?.("#kkDeleteProfileBtn")){ e.preventDefault();
+      if(!editing){ editorClose(); return; }
+      const profiles=loadProfiles();
+      const p=profiles.find(x=>x.id===editing);
+      const ok=confirm(`Eliminar ${p?.name||"este perfil"}?`);
+      if(!ok) return;
+      saveProfiles(profiles.filter(x=>x.id!==editing));
+      if((localStorage.getItem(ACTIVE_KEY)||"")===editing) setActive("");
+      editorClose(); fbRender();
+      return;
+    }
+    const editBtn = t?.closest?.("[data-fb-edit]");
+    if(editBtn){ e.preventDefault(); editorOpen(editBtn.getAttribute("data-fb-edit")); return; }
+    const delBtn = t?.closest?.("[data-fb-del]");
+    if(delBtn){
+      e.preventDefault();
+      const pid = delBtn.getAttribute("data-fb-del");
+      const profiles = loadProfiles();
+      const p = profiles.find(x=>x.id===pid);
+      const ok = confirm(`Eliminar ${p?.name||"este perfil"}?`);
+      if(!ok) return;
+      saveProfiles(profiles.filter(x=>x.id!==pid));
+      if((localStorage.getItem(ACTIVE_KEY)||"")===pid) setActive("");
+      fbRender();
+      return;
+    }
+
+    const add = t?.closest?.("#fbAdd");
+    if(add){ e.preventDefault(); editorOpen(""); return; }
+    const pid=t?.closest?.("[data-fb-pid]")?.getAttribute?.("data-fb-pid");
+    if(pid){ e.preventDefault(); if(manage){ editorOpen(pid); } else { setActive(pid); close(); } return; }
+  }, true);
+
+  const file=q("kkProfileImage");
+  const preview=q("kkAvatarPreview");
+  if(file && preview){
+    file.addEventListener("change", async ()=>{
+      const f=file.files && file.files[0];
+      if(!f) return;
+      const dataUrl = await imgSmall(f);
+      preview.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+      preview.dataset.img = String(dataUrl);
+    });
+  }
+})();
+
+
+
+/* Guaranteed binding for profile switch (capture) */
+document.addEventListener("click", (e)=>{
+  const el = e.target && (e.target.id==="kkSwitchProfileBtn" ? e.target : (e.target.closest ? e.target.closest("#kkSwitchProfileBtn") : null));
+  if(!el) return;
+  try{
+    e.preventDefault();
+    e.stopPropagation();
+    if(window.kkProfilesOpen) window.kkProfilesOpen();
+  }catch(err){ console.error(err); }
+}, true);
+
+
+
+window.KK_showProfileGate = window.KK_showProfileGate || function(){};
+
+/*
+  Palabras reservadas JS: const, let, function, return, if, else, for, while, new, try, catch
+*/
+const STORAGE_PREFIX = "keini_kani_lily";
+const PROFILES_KEY = STORAGE_PREFIX + ":profiles";
+const ACTIVE_PROFILE_KEY = STORAGE_PREFIX + ":active_profile";
+function profileStateKey(pid){ return STORAGE_PREFIX + ":state:" + pid; }
+const NOW = () => Date.now();
+const STAGE_MINUTES = [5, 20, 60, 240, 1440, 4320, 10080, 21600, 0];
+
+function minutesToMs(m){ return m * 60 * 1000; }
+function uid(){ return Math.random().toString(16).slice(2) + "-" + Math.random().toString(16).slice(2); }
+function normalize(str){ return (str ?? "").trim().toLowerCase().replace(/\s+/g, " "); }
+function escapeHtml(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+/* Profiles (robusto, sin romper el SRS) */
+const KK = {
+  manageMode:false,
+  editingId:"",
+  tempImg:"",
+};
+function kkLoadProfiles(){
+  const raw = localStorage.getItem(PROFILES_KEY);
+  if(!raw) return [];
+  try{ const p=JSON.parse(raw); return Array.isArray(p)?p:[]; }catch{ return []; }
+}
+function kkSaveProfiles(p){ localStorage.setItem(PROFILES_KEY, JSON.stringify(p)); }
+function kkGetActiveProfile(){ return localStorage.getItem(ACTIVE_PROFILE_KEY) || ""; }
+function kkSetActiveProfile(pid){ localStorage.setItem(ACTIVE_PROFILE_KEY, pid); }
+
+function kkDefaultAvatar(name){
+  const txt=(name||"KK").slice(0,2).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff0096"/><stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient></defs>
+    <rect width="220" height="220" rx="44" fill="url(#g)"/>
+    <text x="110" y="135" font-family="system-ui,Segoe UI,Roboto" font-size="86" font-weight="900" text-anchor="middle" fill="#fff">${txt}</text>
+  </svg>`;
+  return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+}
+
+function kkShowGate(){
+  const gate=document.getElementById("kkProfileGate");
+  if(!gate) return;
+  KK.manageMode=false;
+  KK.editingId="";
+  KK.tempImg="";
+  const mb=document.getElementById("kkManageBtn");
+  if(mb) mb.textContent="Administrar";
+  kkCloseEditor();
+  gate.style.display="block";
+  kkRenderProfiles();
+}
+function kkHideGate(){
+  const gate=document.getElementById("kkProfileGate");
+  if(!gate) return;
+  gate.style.display="none";
+  KK.manageMode=false;
+  const mb=document.getElementById("kkManageBtn");
+  if(mb) mb.textContent="Administrar";
+  kkCloseEditor();
+}
+
+function kkOpenEditor(pid){
+  KK.editingId = pid || "";
+  KK.tempImg = "";
+  const box=document.getElementById("kkProfileEditor");
+  const note=document.getElementById("kkEditorNote");
+  const name=document.getElementById("kkProfileName");
+  const preview=document.getElementById("kkAvatarPreview");
+  const file=document.getElementById("kkProfileImage");
+  if(!box||!note||!name||!preview||!file) return;
+
+  box.style.display="block";
+  file.value="";
+  preview.dataset.img="";
+
+  if(pid){
+    const p = kkLoadProfiles().find(x=>x.id===pid);
+    name.value = p?.name || "";
+    const img = p?.avatar || kkDefaultAvatar(p?.name||"KK");
+    preview.innerHTML = `<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+    note.textContent="Editando perfil.";
+  }else{
+    name.value="";
+    preview.innerHTML = `<div style="font-weight:900;color:var(--muted);">IMG</div>`;
+    note.textContent="Creando perfil nuevo.";
+  }
+}
+function kkCloseEditor(){
+  const box=document.getElementById("kkProfileEditor");
+  if(box) box.style.display="none";
+  const preview=document.getElementById("kkAvatarPreview");
+  if(preview){ preview.dataset.img=""; }
+  KK.tempImg="";
+  KK.editingId="";
+}
+function kkSaveProfile(){
+  const nameEl=document.getElementById("kkProfileName");
+  const preview=document.getElementById("kkAvatarPreview");
+  const note=document.getElementById("kkEditorNote");
+  const name=(nameEl?.value||"").trim();
+  if(!name){ if(note) note.textContent="Nombre requerido."; return; }
+
+  const img = (preview?.dataset?.img)||"";
+  const profiles=kkLoadProfiles();
+
+  if(KK.editingId){
+    const idx=profiles.findIndex(p=>p.id===KK.editingId);
+    if(idx>=0){
+      profiles[idx].name=name;
+      if(img) profiles[idx].avatar=img;
+      if(!profiles[idx].avatar) profiles[idx].avatar=kkDefaultAvatar(name);
+    }
+  }else{
+    const pid=uid();
+    profiles.push({id:pid,name,avatar:img||kkDefaultAvatar(name)});
+  }
+  kkSaveProfiles(profiles);
+  kkCloseEditor();
+  kkRenderProfiles();
+}
+function kkDeleteProfile(pid){
+  const profiles=kkLoadProfiles();
+  const p=profiles.find(x=>x.id===pid);
+  const ok=confirm(`Eliminar ${p?.name||"este perfil"}? Esto borra su progreso local.`);
+  if(!ok) return;
+  kkSaveProfiles(profiles.filter(x=>x.id!==pid));
+  localStorage.removeItem(profileStateKey(pid));
+  if(kkGetActiveProfile()===pid) kkSetActiveProfile("");
+  kkCloseEditor();
+  kkRenderProfiles();
+}
+
+function kkRenderProfiles(){
+  const grid=document.getElementById("kkProfilesGrid");
+  if(!grid) return;
+  const profiles=kkLoadProfiles();
+
+  const cards = profiles.map(p=>{
+    const img=p.avatar||kkDefaultAvatar(p.name);
+    const controls = KK.manageMode ? `
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+        <button data-kk-edit="${p.id}" style="padding:8px 10px;border-radius:14px;">Editar</button>
+        <button data-kk-del="${p.id}" style="padding:8px 10px;border-radius:14px;">Eliminar</button>
+      </div>` : ``;
+
+    return `
+      <div class="card" style="text-align:center;cursor:pointer;padding:14px;" data-kk-pid="${p.id}">
+        <div style="width:120px;height:120px;margin:0 auto;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:rgba(255,255,255,.6);">
+          <img alt="${escapeHtml(p.name)}" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+        </div>
+        <div style="margin-top:10px;font-weight:900;">${escapeHtml(p.name)}</div>
+        ${controls}
+      </div>`;
+  }).join("");
+
+  const addCard = `
+    <div class="card" style="text-align:center;cursor:pointer;padding:14px;border-style:dashed;" id="kkAddProfileCard">
+      <div style="width:120px;height:120px;margin:0 auto;border-radius:18px;display:grid;place-items:center;border:1px dashed var(--border);background:rgba(255,255,255,.4);">
+        <div style="font-size:56px;font-weight:900;color:var(--muted);">+</div>
+      </div>
+      <div style="margin-top:10px;font-weight:900;color:var(--muted);">Agregar</div>
+    </div>`;
+  grid.innerHTML = cards + addCard;
+
+  // Events (delegados)
+  grid.onclick = (e)=>{
+    const t=e.target;
+    const pid = t?.getAttribute?.("data-kk-pid") || t?.closest?.("[data-kk-pid]")?.getAttribute?.("data-kk-pid");
+    const edit = t?.getAttribute?.("data-kk-edit") || t?.closest?.("[data-kk-edit]")?.getAttribute?.("data-kk-edit");
+    const del = t?.getAttribute?.("data-kk-del") || t?.closest?.("[data-kk-del]")?.getAttribute?.("data-kk-del");
+
+    if(t && t.id==="kkAddProfileCard"){ kkOpenEditor(""); return; }
+    if(edit){ kkOpenEditor(edit); return; }
+    if(del){ kkDeleteProfile(del); return; }
+    if(pid){
+      if(KK.manageMode) return;
+      kkSetActiveProfile(pid);
+      // Reiniciar state con el perfil activo
+      state = loadState() ?? seedDeck();
+      saveState(state);
+      kkHideGate();
+      // Volver a UI
+      try{
+        ui.studyJlpt.value = state.settings.studyJlpt ?? "N4";
+        if(typeof lessonStudyEl !== "undefined" && lessonStudyEl){ lessonStudyEl.value = ui.studyJlpt.value; }
+        updateSidebar();
+        setActiveTab(ui.tabLessons);
+        setMain("vocab");
+        startLessons();
+      }catch(_){}
+    }
+  };
+}
+
+// expose
+window.KK_showProfileGate = kkShowGate;
+function kanaParensToRuby(line){
+  const safe = escapeHtml(line);
+  return safe.replace(/([一-龯々〆ヵヶ]+)\(([^)]+)\)/g, (_m, kanji, reading) => `<ruby>${kanji}<rt>${reading}</rt></ruby>`);
+}
+function loadProfiles(){
+  const raw = localStorage.getItem(PROFILES_KEY);
+  if(!raw) return [];
+  try{ const p = JSON.parse(raw); return Array.isArray(p)?p:[]; }catch{ return []; }
+}
+function saveProfiles(p){ localStorage.setItem(PROFILES_KEY, JSON.stringify(p)); }
+
+
+
+function loadState(){
+  const pid = kkGetActiveProfile();
+  if(!pid) return null;
+  const raw = localStorage.getItem(profileStateKey(pid));
+  if(!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+function saveState(s){
+  const pid = kkGetActiveProfile();
+  if(!pid) return;
+  localStorage.setItem(profileStateKey(pid), JSON.stringify(s));
+}
+
+
+
+function kkShowPop(){
+  const el = document.getElementById("kkPop");
+  if(!el) return;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"), 550);
+}
+
+
+/* Grammar database (compact, ampliable por ti) */
+const GRAMMAR = [
+  // N5
+  { level:"N5", key:"AはBです", title:"AはBです", theory:"Frase nominal básica: A es B. です marca cortesía. Negación: ではありません.", ex:"わたしは学生です。", cloze:"わたしは学生__。", answers:["です"], hint:"forma cortés afirmativa" },
+  { level:"N5", key:"Vます", title:"Vます (presente cortés)", theory:"ます = forma cortés. Ej: 行きます/食べます. Neg: ません. Pasado: ました/ませんでした.", ex:"毎日学校へ行きます。", cloze:"毎日学校へ行き__。", answers:["ます"], hint:"forma cortés presente" },
+  { level:"N5", key:"を/に/で", title:"Partículas を・に・で", theory:"を=objeto directo. に=destino/tiempo puntual/existencia. で=lugar de acción/medio.", ex:"学校で勉強します。", cloze:"学校__勉強します。", answers:["で"], hint:"lugar donde ocurre la acción" },
+
+  // N4
+  { level:"N4", key:"Vている", title:"Vている", theory:"Acción en progreso o estado resultante. 読んでいる=estoy leyendo / (estado) 結婚している.", ex:"今、雨が降っています。", cloze:"今、雨が降って__。", answers:["います","いる"], hint:"progresivo (cortesía/llano)" },
+  { level:"N4", key:"Vてから", title:"Vてから", theory:"Secuencia: después de V1, V2. Primero haz A, luego B.", ex:"ご飯を食べてから勉強します。", cloze:"ご飯を食べて__勉強します。", answers:["から"], hint:"después de" },
+  { level:"N4", key:"なければならない", title:"Vなければならない", theory:"Obligación: debo. Variante: なくてはいけない.", ex:"明日、早く起きなければなりません。", cloze:"明日、早く起きなければなりませ__。", answers:["ん"], hint:"terminación de ません" },
+
+  // N3
+  { level:"N3", key:"Vように", title:"Vように", theory:"Propósito/objetivo: para que…, de modo que…. También 'instrucción' suave: 忘れないように.", ex:"忘れないようにメモします。", cloze:"忘れないよう__メモします。", answers:["に"], hint:"forma fija ように" },
+  { level:"N3", key:"Vてしまう", title:"Vてしまう", theory:"Completar (terminar) o arrepentimiento/accidente: しちゃう (casual).", ex:"宿題を忘れてしまいました。", cloze:"宿題を忘れてしまいま__。", answers:["した"], hint:"pasado cortés" },
+  { level:"N3", key:"Vばよかった", title:"Vばよかった", theory:"Arrepentimiento: debería haber… (si hubiera…).", ex:"もっと勉強すればよかった。", cloze:"もっと勉強すれ__よかった。", answers:["ば"], hint:"condicional ば" },
+
+  // N2
+  { level:"N2", key:"〜わけだ", title:"〜わけだ", theory:"Conclusión/explicación lógica: 'por eso', 'con razón'. No es 'excusa', es inferencia.", ex:"雨が降っている。だから寒いわけだ。", cloze:"だから寒いわけ__。", answers:["だ"], hint:"terminación llana" },
+  { level:"N2", key:"〜わけではない", title:"〜わけではない", theory:"No significa que… / no necesariamente…. Negación parcial.", ex:"高い料理がいつもおいしいわけではない。", cloze:"おいしいわけではな__。", answers:["い"], hint:"terminación ない" },
+  { level:"N2", key:"〜ことにする", title:"〜ことにする", theory:"Decidir (voluntad): V辞書+ことにする. Hábito decidido: ことにしている.", ex:"毎日走ることにしました。", cloze:"毎日走ることにしまし__。", answers:["た"], hint:"pasado cortés" },
+
+  // N1
+  { level:"N1", key:"〜に至る", title:"〜に至る", theory:"Llegar al punto de / culminar en. Formal: 結論に至る.", ex:"議論の末、結論に至った。", cloze:"結論に至っ__。", answers:["た"], hint:"pasado llano" },
+  { level:"N1", key:"〜をもって", title:"〜をもって", theory:"Con (algo) como punto final/medio. Formal: 本日をもって終了します.", ex:"本日をもって受付を終了します。", cloze:"本日をもって受付を終__します。", answers:["了"], hint:"terminación de 終了 (kanji)" },
+  { level:"N1", key:"〜に堪えない", title:"〜に堪えない", theory:"No poder soportar / inevitablemente (emociones): 感謝に堪えない. Formal.", ex:"皆様のご厚意に感謝に堪えません。", cloze:"感謝に堪えませ__。", answers:["ん"], hint:"cortesía negativa" },
+];
+
+/* Initial deck: vocab/verbs N4+N3 only */
+function seedDeck(){
+  const base = [
+    { jlpt:"N4", level:1, type:"verb", jp:"続ける", furigana:"つづける", meaning:"continuar",
+      mnemonic:"tsu-ZU-ke-ru: 'seguir' su-zúper constante",
+      examples:["毎日(まいにち)、練習(れんしゅう)を続(つづ)けています。 — Practico todos los días。","難(むずか)しいけど、続(つづ)けます。 — Es difícil, pero continúo。"] },
+    { jlpt:"N4", level:1, type:"verb", jp:"断る", furigana:"ことわる", meaning:"rechazar",
+      mnemonic:"koto-WARU: 'corto' y lo aparto: rechazo",
+      examples:["誘(さそ)いを断(ことわ)りました。 — Rechacé la invitación。","今日は無理(むり)なので断(ことわ)ります。 — Hoy no puedo, así que rechazo。"] },
+    { jlpt:"N4", level:1, type:"verb", jp:"気づく", furigana:"きづく", meaning:"darse cuenta",
+      mnemonic:"ki-ZUKU: 'click' y ¡zu!: me doy cuenta",
+      examples:["まちがいに気(き)づきました。 — Me di cuenta del error。","帰(かえ)ってから忘(わす)れ物(もの)に気(き)づいた。 — Me di cuenta del olvido al volver。"] },
+    { jlpt:"N4", level:1, type:"adj-na", jp:"無理", furigana:"むり", meaning:"imposible / excesivo",
+      mnemonic:"mu-RI: 'muy rígido': imposible para hoy",
+      examples:["今日は無理(むり)です。 — Hoy no puedo。","無理(むり)な計画(けいかく)はやめましょう。 — Dejemos un plan irreal。"] },
+
+    { jlpt:"N3", level:1, type:"verb", jp:"申し込む", furigana:"もうしこむ", meaning:"solicitar / inscribirse",
+      mnemonic:"mou + 込む(こむ): 'me meto' con solicitud: me inscribo",
+      examples:["申(もう)し込(こ)みは明日(あした)までです。 — La solicitud es hasta mañana。","コースに申(もう)し込(こ)みました。 — Me inscribí al curso。"] },
+    { jlpt:"N3", level:1, type:"verb", jp:"確かめる", furigana:"たしかめる", meaning:"confirmar / comprobar",
+      mnemonic:"tashi-KAME-ru: 'cámara' mental para verificar",
+      examples:["時間(じかん)を確(たし)かめてください。 — Confirma la hora。","住所(じゅうしょ)を確(たし)かめます。 — Compruebo la dirección。"] },
+    { jlpt:"N3", level:1, type:"verb", jp:"やり直す", furigana:"やりなおす", meaning:"rehacer",
+      mnemonic:"直す(なおす)=arreglar: 'hacer de nuevo' = rehacer",
+      examples:["最初(さいしょ)からやり直(なお)します。 — Lo rehago desde el principio。","間違(まちが)えたのでやり直(なお)した。 — Me equivoqué y lo rehice。"] },
+    { jlpt:"N3", level:1, type:"adj-na", jp:"必要", furigana:"ひつよう", meaning:"necesario",
+      mnemonic:"hitsu-YOU: 'you' lo necesitas sí o sí",
+      examples:["準備(じゅんび)が必要(ひつよう)です。 — Es necesaria la preparación。","必要(ひつよう)な書類(しょるい)を集(あつ)めます。 — Reúno los documentos necesarios。"] },
+
+    { jlpt:"N3", level:2, type:"verb", jp:"認める", furigana:"みとめる", meaning:"reconocer / admitir",
+      mnemonic:"mi-TO-me: 'me lo tomo' y lo admito",
+      examples:["失敗(しっぱい)を認(みと)めました。 — Admití el error。","努力(どりょく)が認(みと)められた。 — El esfuerzo fue reconocido。"] },
+    { jlpt:"N3", level:2, type:"verb", jp:"避ける", furigana:"さける", meaning:"evitar",
+      mnemonic:"sa-KERU: sácalo del camino",
+      examples:["混雑(こんざつ)を避(さ)けます。 — Evito las multitudes。","危険(きけん)を避(さ)けてください。 — Evita el peligro。"] },
+    { jlpt:"N3", level:2, type:"adj-na", jp:"十分", furigana:"じゅうぶん", meaning:"suficiente",
+      mnemonic:"juu-BUN: un 'buen' montón",
+      examples:["準備(じゅんび)は十分(じゅうぶん)です。 — La preparación es suficiente。","時間(じかん)が十分(じゅうぶん)あります。 — Hay tiempo suficiente。"] },
+    { jlpt:"N5", level:1, type:"verb", jp:"行く", furigana:"いく", meaning:"ir", mnemonic:"いく=ir (ir yendo)", examples:["学校(がっこう)へ行(い)きます。 — Voy a la escuela。"] },
+    { jlpt:"N5", level:1, type:"verb", jp:"来る", furigana:"くる", meaning:"venir", mnemonic:"くる=venir (curva hacia aquí)", examples:["友達(ともだち)が来(き)ます。 — Mi amigo viene。"] },
+    { jlpt:"N5", level:1, type:"verb", jp:"食べる", furigana:"たべる", meaning:"comer", mnemonic:"たべる=table+ru: comida en la mesa", examples:["パンを食(た)べます。 — Como pan。"] },
+    { jlpt:"N5", level:1, type:"verb", jp:"飲む", furigana:"のむ", meaning:"beber", mnemonic:"のむ=nom: beber algo", examples:["水(みず)を飲(の)みます。 — Bebo agua。"] },
+    { jlpt:"N5", level:1, type:"verb", jp:"見る", furigana:"みる", meaning:"ver", mnemonic:"みる=mirar", examples:["テレビを見(み)ます。 — Veo TV。"] },
+    { jlpt:"N5", level:1, type:"vocab", jp:"学校", furigana:"がっこう", meaning:"escuela", mnemonic:"がっこう=ga-kko: lugar de clases", examples:["学校(がっこう)はあそこです。 — La escuela está allí。"] },
+    { jlpt:"N5", level:1, type:"vocab", jp:"時間", furigana:"じかん", meaning:"tiempo / hora", mnemonic:"じ=tiempo, かん=intervalo", examples:["時間(じかん)がありますか。 — ¿Tienes tiempo?"] },
+    { jlpt:"N5", level:1, type:"adj-i", jp:"新しい", furigana:"あたらしい", meaning:"nuevo", mnemonic:"あたらしい=new", examples:["新(あたら)しい本(ほん)です。 — Es un libro nuevo。"] },
+    { jlpt:"N5", level:1, type:"adj-na", jp:"好き", furigana:"すき", meaning:"gustar", mnemonic:"すき=like", examples:["日本語(にほんご)が好(す)きです。 — Me gusta el japonés。"] },
+    { jlpt:"N2", level:30, type:"verb", jp:"見込む", furigana:"みこむ", meaning:"prever / estimar", mnemonic:"見(み)+込(こ)む: mirar dentro = estimar", examples:["売上(うりあげ)を見込(みこ)む。 — Prever ventas。"] },
+    { jlpt:"N2", level:30, type:"verb", jp:"引き受ける", furigana:"ひきうける", meaning:"aceptar / encargarse", mnemonic:"引(ひ)き受(う)ける: 'tomar' el encargo", examples:["仕事(しごと)を引(ひ)き受(う)けた。 — Acepté el trabajo。"] },
+    { jlpt:"N2", level:31, type:"verb", jp:"取り組む", furigana:"とりくむ", meaning:"abordar / enfrentarse", mnemonic:"取り(と)る+組(く)む: 'agarrar' y meterse = abordar", examples:["問題(もんだい)に取(と)り組(く)む。 — Afrontar un problema。"] },
+    { jlpt:"N2", level:31, type:"adj-na", jp:"確実", furigana:"かくじつ", meaning:"seguro / cierto", mnemonic:"確=seguro + 実=real", examples:["確実(かくじつ)な方法(ほうほう)。 — Método seguro。"] },
+    { jlpt:"N2", level:31, type:"vocab", jp:"影響", furigana:"えいきょう", meaning:"influencia / impacto", mnemonic:"影= sombra + 響= resonar", examples:["環境(かんきょう)に影響(えいきょう)がある。 — Impacta el ambiente。"] },
+    { jlpt:"N1", level:60, type:"verb", jp:"否めない", furigana:"いなめない", meaning:"no poder negar", mnemonic:"否(いな)む=negar → 否めない=no se puede negar", examples:["事実(じじつ)は否(いな)めない。 — No se puede negar el hecho。"] },
+    { jlpt:"N1", level:60, type:"verb", jp:"捉える", furigana:"とらえる", meaning:"captar / percibir", mnemonic:"とらえる=atrapar la idea", examples:["状況(じょうきょう)を捉(とら)える。 — Captar la situación。"] },
+    { jlpt:"N1", level:60, type:"adj-na", jp:"著しい", furigana:"いちじるしい", meaning:"notable / marcado", mnemonic:"いち=uno + しるし=marca → muy marcado", examples:["著(いちじる)しい変化(へんか)。 — Cambio notable。"] },
+    { jlpt:"N1", level:60, type:"vocab", jp:"見解", furigana:"けんかい", meaning:"punto de vista", mnemonic:"見=ver + 解=entender", examples:["見解(けんかい)が一致(いっち)する。 — Coinciden los puntos de vista。"] }
+  ];
+  const now = NOW();
+  return {
+    settings:{ lessonSize:10, reviewSize:20, strictness:"lenient", studyJlpt:"N4" },
+    currentLevel:1,
+    items: base.map(x => ({
+      id:uid(), jlpt:x.jlpt, level:x.level, type:x.type, jp:x.jp, furigana:x.furigana, meaning:x.meaning,
+      mnemonic:x.mnemonic ?? "", examples:Array.isArray(x.examples)?x.examples:[],
+      learnedAt:0, srsStage:0, dueAt:now, correctStreak:0, wrongStreak:0, lastSeenAt:0, masteredAt:0
+    })),
+    grammar: { attempts:0, correct:0, wrong:0, lastLevel:"N3", lastKey:"" },
+    stats:{ totalReviews:0, correct:0, wrong:0, lastSessionAt:0 }
+  };
+}
+
+let state = loadState() ?? seedDeck();
+saveState(state);
+
+/* UI refs */
+const ui = {
+  // tabs
+  tabLessons:document.getElementById("tabLessons"),
+  tabReviews:document.getElementById("tabReviews"),
+  tabGrammar:document.getElementById("tabGrammar"),
+  tabDeck:document.getElementById("tabDeck"),
+  mainTitle:document.getElementById("mainTitle"),
+  vrGrid:document.getElementById("vrGrid"),
+  grammarWrap:document.getElementById("grammarWrap"),
+  deckCard:document.getElementById("deckCard"),
+
+  // study filter
+  studyJlpt:document.getElementById("studyJlpt"),
+
+  // vocab prompt
+  promptMain:document.getElementById("promptMain"),
+  promptTags:document.getElementById("promptTags"),
+  promptNote:document.getElementById("promptNote"),
+  infoGrid:document.getElementById("infoGrid"),
+  furiganaBig:document.getElementById("furiganaBig"),
+  meaningBig:document.getElementById("meaningBig"),
+  mnemoBox:document.getElementById("mnemoBox"),
+  mnemoText:document.getElementById("mnemoText"),
+  feedback:document.getElementById("feedback"),
+  examplesBox:document.getElementById("examplesBox"),
+  examplesList:document.getElementById("examplesList"),
+  lessonPicker:document.getElementById("lessonPicker"),
+  lpGrid:document.getElementById("lpGrid"),
+  answerRow:document.getElementById("answerRow"),
+  gradeRow:document.getElementById("gradeRow"),
+  lessonRow:document.getElementById("lessonRow"),
+  answerInput:document.getElementById("answerInput"),
+  answerBtn:document.getElementById("answerBtn"),
+  showBtn:document.getElementById("showBtn"),
+  againBtn:document.getElementById("againBtn"),
+  hardBtn:document.getElementById("hardBtn"),
+  goodBtn:document.getElementById("goodBtn"),
+  easyBtn:document.getElementById("easyBtn"),
+  skipBtn:document.getElementById("skipBtn"),
+  nextLessonBtn:document.getElementById("nextLessonBtn"),
+  markLearnedBtn:document.getElementById("markLearnedBtn"),
+  exitLessonsBtn:document.getElementById("exitLessonsBtn"),
+
+  // sidebar pills/stats
+  clockPill:document.getElementById("clockPill"),
+  levelPill:document.getElementById("levelPill"),
+  duePill:document.getElementById("duePill"),
+  kTotal:document.getElementById("kTotal"),
+  kLearned:document.getElementById("kLearned"),
+  kDue:document.getElementById("kDue"),
+  kMastered:document.getElementById("kMastered"),
+  levelBar:document.getElementById("levelBar"),
+  levelDetail:document.getElementById("levelDetail"),
+  storeInfo:document.getElementById("storeInfo"),
+  resetProgressBtn:document.getElementById("resetProgressBtn"),
+  wipeAllBtn:document.getElementById("wipeAllBtn"),
+
+  // deck settings
+  lessonSize:document.getElementById("lessonSize"),
+  reviewSize:document.getElementById("reviewSize"),
+  strictness:document.getElementById("strictness"),
+  addBtn:document.getElementById("addBtn"),
+  importBtn:document.getElementById("importBtn"),
+  exportBtn:document.getElementById("exportBtn"),
+  importBox:document.getElementById("importBox"),
+  itemJlpt:document.getElementById("itemJlpt"),
+  itemLevel:document.getElementById("itemLevel"),
+  itemType:document.getElementById("itemType"),
+  jp:document.getElementById("jp"),
+  furigana:document.getElementById("furigana"),
+  meaning:document.getElementById("meaning"),
+  mnemonic:document.getElementById("mnemonic"),
+  examples:document.getElementById("examples"),
+
+  // grammar
+  gLevel:document.getElementById("gLevel"),
+  gRandom:document.getElementById("gRandom"),
+  gList:document.getElementById("gList"),
+  gSentence:document.getElementById("gSentence"),
+  gPromptMeta:document.getElementById("gPromptMeta"),
+  gTheoryBox:document.getElementById("gTheoryBox"),
+  gTheoryText:document.getElementById("gTheoryText"),
+  gAnswer:document.getElementById("gAnswer"),
+  gCheck:document.getElementById("gCheck"),
+  gShow:document.getElementById("gShow"),
+  gNext:document.getElementById("gNext"),
+  gFeedback:document.getElementById("gFeedback"),
+};
+
+function setActiveTab(tab){
+  for (const b of [ui.tabLessons, ui.tabReviews, ui.tabGrammar, ui.tabDeck]) b.classList.remove("active");
+  tab.classList.add("active");
+}
+function currentStudy(){
+  return ui.studyJlpt.value || state.settings.studyJlpt || "N4";
+}
+function studyMatches(item){
+  const s = currentStudy();
+  if (s === "ALL") return true;
+  return item.jlpt === s;
+}
+
+/* Vocab stats */
+function countDue(){
+  const now=NOW();
+  return state.items.filter(it=>it.learnedAt>0 && it.srsStage<8 && it.dueAt<=now && studyMatches(it)).length;
+}
+function countMastered(){ return state.items.filter(it=>it.srsStage>=8 && studyMatches(it)).length; }
+function countLearned(){ return state.items.filter(it=>it.learnedAt>0 && studyMatches(it)).length; }
+function getLevelItems(level){ return state.items.filter(it=>it.level===level && studyMatches(it)); }
+
+function levelProgress(){
+  const lvl=state.currentLevel; const items=getLevelItems(lvl);
+  if(items.length===0) return {pct:0,done:0,total:0,unlocked:true};
+  const done=items.filter(it=>it.learnedAt>0 && it.srsStage>=4).length;
+  const total=items.length; const pct=total?done/total:0;
+  return {pct,done,total,unlocked:pct>=0.8};
+}
+function maybeAdvanceLevel(){
+  const p=levelProgress(); if(!p.unlocked) return;
+  const maxLevel=Math.max(1,state.items.filter(studyMatches).map(it=>it.level));
+  if(state.currentLevel<maxLevel){ state.currentLevel+=1; saveState(state); }
+}
+function updateSidebar(){
+  ui.clockPill.textContent=new Date().toLocaleString();
+  ui.levelPill.textContent="Level: "+state.currentLevel;
+  ui.duePill.textContent="Due: "+countDue();
+  ui.kTotal.textContent=String(state.items.filter(studyMatches).length);
+  ui.kLearned.textContent=String(countLearned());
+  ui.kDue.textContent=String(countDue());
+  ui.kMastered.textContent=String(countMastered());
+  const p=levelProgress();
+  ui.levelBar.style.width=Math.round((p.pct||0)*100)+"%";
+  ui.levelDetail.textContent=`Nivel ${state.currentLevel} (vocab): ${p.done}/${p.total} con stage ≥ 4 (objetivo 80%).`;
+  const acc=state.stats.totalReviews?Math.round((state.stats.correct/state.stats.totalReviews)*100):0;
+  ui.storeInfo.textContent=`study=${currentStudy()} | items=${state.items.length} | learned=${countLearned()} | due=${countDue()} | mastered=${countMastered()} | reviews=${state.stats.totalReviews} | acc=${acc}% | grammar=${state.grammar.correct}/${state.grammar.attempts}`;
+}
+
+/* Vocab rendering */
+function renderExamples(it){
+  const ex=Array.isArray(it?.examples)?it.examples:[];
+  if(!it||ex.length===0){ ui.examplesBox.style.display="none"; ui.examplesList.innerHTML=""; return; }
+  ui.examplesList.innerHTML=ex.slice(0,4).map(s=>`<div class="exline">${kanaParensToRuby(s)}</div>`).join("");
+  ui.examplesBox.style.display="block";
+}
+function renderMnemo(it){
+  const m=(it?.mnemonic??"").trim();
+  if(!it||!m){ ui.mnemoBox.style.display="none"; ui.mnemoText.textContent=""; return; }
+  ui.mnemoText.textContent=m; ui.mnemoBox.style.display="block";
+}
+function setPrompt(it,mode,reviewMode){
+  if(!it){
+    ui.promptMain.textContent="—"; ui.promptTags.textContent="—";
+    ui.promptNote.textContent=mode==="lessons"?"No hay lecciones para este Study JLPT (o nivel).":mode==="reviews"?"No hay reviews due ahora.":"—";
+    ui.infoGrid.style.display="none"; ui.mnemoBox.style.display="none"; return;
+  }
+  ui.promptMain.textContent=(mode==="reviews" && reviewMode==="meaning-to-jp")?it.meaning:it.jp;
+  ui.promptTags.innerHTML=[`<span class="tag">${escapeHtml(it.jlpt)}</span>`,`<span class="tag">Lv ${escapeHtml(it.level)}</span>`,`<span class="tag">${escapeHtml(it.type)}</span>`].join(" ");
+  ui.furiganaBig.textContent=it.furigana||"—";
+  ui.meaningBig.textContent=it.meaning||"—";
+  ui.infoGrid.style.display="grid";
+  renderMnemo(it);
+  ui.promptNote.textContent=(mode==="reviews" && reviewMode==="meaning-to-jp")?"Responde con Japonés (kanji o furigana).":"Relee: furigana + significado + mnemotecnia + ejemplos.";
+}
+function setMain(view){
+  // show/hide big sections
+  ui.vrGrid.style.display = (view==="vocab") ? "grid" : "none";
+  ui.grammarWrap.style.display = (view==="grammar") ? "block" : "none";
+  ui.deckCard.style.display = (view==="deck") ? "block" : "none";
+
+  // inner controls for vocab
+  const isReviews = (view==="vocab" && ui.mainTitle.textContent==="Reviews");
+  const isLessons = (view==="vocab" && ui.mainTitle.textContent==="Lessons");
+  ui.answerRow.style.display = isReviews ? "flex" : "none";
+  ui.gradeRow.style.display = isReviews ? "flex" : "none";
+  ui.lessonRow.style.display = isLessons ? "flex" : "none";
+  ui.lessonPicker.style.display = isLessons ? "block" : "none";
+}
+
+/* Sessions (vocab) */
+let session={mode:"jp-to-meaning",queue:[],idx:0,active:false};
+
+function pickLessonsQueue(){
+  const size=Number(ui.lessonSize.value||state.settings.lessonSize||10);
+  const lvl=state.currentLevel;
+  const candidates=state.items
+    .filter(it=>it.learnedAt===0 && it.level<=lvl && studyMatches(it))
+    .sort((a,b)=>a.level-b.level);
+  return candidates.slice(0,size);
+}
+function renderLessonPicker(){
+  if(!session.active || session.queue.length===0){ ui.lessonPicker.style.display="none"; ui.lpGrid.innerHTML=""; return; }
+  ui.lessonPicker.style.display="block";
+  ui.lpGrid.innerHTML=session.queue.map((it,i)=>{
+    const isActive=i===session.idx; const learned=it.learnedAt>0;
+    const cls=["lpItem",isActive?"active":"",learned?"learned":""].join(" ");
+    const chip=learned?`<span class="lpChip">learned</span>`:`<span class="lpChip">new</span>`;
+    return `<div class="${cls}">
+      <div class="lpLeft" title="${escapeHtml(it.meaning)}">
+        <div class="lpJp mono">${escapeHtml(it.jp)}</div>
+        <div class="lpMeta">${escapeHtml(it.furigana)} · ${escapeHtml(it.meaning)}</div>
+      </div>
+      <div class="lpBtns">${chip}<button data-jump="${i}">View</button></div>
+    </div>`;
+  }).join("");
+  ui.lpGrid.querySelectorAll("button[data-jump]").forEach(btn=>{
+    btn.addEventListener("click",()=>jumpToLesson(Number(btn.getAttribute("data-jump"))));
+  });
+}
+function jumpToLesson(i){
+  if(!session.active) return;
+  if(Number.isNaN(i) || i<0 || i>=session.queue.length) return;
+  session.idx=i;
+  const it=session.queue[session.idx];
+  setPrompt(it,"lessons");
+  renderExamples(it);
+  renderLessonPicker();
+  updateSidebar();
+}
+function startLessons(){
+  session.queue=pickLessonsQueue();
+  session.idx=0; session.active=true;
+
+  if(session.queue.length===0){
+    ui.feedback.textContent="No hay lecciones para este Study JLPT (o tu nivel actual).";
+    setPrompt(null,"lessons"); renderLessonPicker(); updateSidebar(); return;
+  }
+  ui.feedback.textContent="Selecciona abajo lo que quieras re-ver. Mark Learned lo habilita para Reviews.";
+  const it=session.queue[session.idx];
+  setPrompt(it,"lessons"); renderExamples(it); renderLessonPicker(); updateSidebar();
+}
+function nextLesson(){
+  if(!session.active) return;
+  session.idx+=1;
+  if(session.idx>=session.queue.length){
+    session.active=false; ui.feedback.textContent="Lecciones terminadas. Ve a Reviews.";
+    setPrompt(null,"lessons"); ui.examplesBox.style.display="none"; renderLessonPicker(); updateSidebar(); return;
+  }
+  const it=session.queue[session.idx];
+  setPrompt(it,"lessons"); renderExamples(it); renderLessonPicker(); updateSidebar();
+}
+function markLearned(){
+  const it=session.queue[session.idx];
+  if(!it) return;
+  const now=NOW();
+  it.learnedAt=now; it.dueAt=now;
+  saveState(state);
+  if(lessonStudyEl){ lessonStudyEl.value = ui.studyJlpt.value; }
+  if(lessonStudyEl){ lessonStudyEl.value = ui.studyJlpt.value; }
+  ui.feedback.innerHTML=`<span class="ok">Learned.</span> Puedes seguir revisando otros antes de Reviews.`;
+  renderLessonPicker(); updateSidebar();
+}
+function exitLessons(){
+  session.active=false;
+  ui.feedback.textContent="Lecciones detenidas.";
+  setPrompt(null,"lessons"); ui.examplesBox.style.display="none"; renderLessonPicker(); updateSidebar();
+}
+
+function pickReviewsQueue(){
+  const now=NOW();
+  const size=Number(ui.reviewSize.value||state.settings.reviewSize||20);
+  const due=state.items
+    .filter(it=>it.learnedAt>0 && it.srsStage<8 && it.dueAt<=now && studyMatches(it))
+    .sort((a,b)=>a.dueAt-b.dueAt);
+  return due.slice(0,size);
+}
+function startReviews(){
+  session.queue=pickReviewsQueue();
+  session.idx=0; session.active=true;
+
+  if(session.queue.length===0){
+    ui.feedback.textContent="No hay reviews due ahora.";
+    setPrompt(null,"reviews"); updateSidebar(); return;
+  }
+  session.mode=Math.random()<0.65?"jp-to-meaning":"meaning-to-jp";
+  ui.answerInput.value="";
+  ui.feedback.textContent="Responde y luego califica (Again/Hard/Good/Easy).";
+  const it=session.queue[session.idx];
+  setPrompt(it,"reviews",session.mode);
+  ui.examplesBox.style.display="none";
+  updateSidebar();
+}
+function checkAnswer(user,it){
+  const strict=(state.settings.strictness||"lenient")==="strict";
+  const expected=(session.mode==="jp-to-meaning")?it.meaning:it.jp;
+  if(strict) return user===expected;
+  const u=normalize(user), e=normalize(expected);
+  if(u===e) return true;
+  if(session.mode==="meaning-to-jp"){
+    const f=normalize(it.furigana);
+    if(u===f) return true;
+  }
+  return false;
+}
+function showAnswer(it){
+  if(!it) return;
+  const target=(session.mode==="jp-to-meaning")
+    ? `<span class="ok mono">${escapeHtml(it.meaning)}</span>`
+    : `<span class="ok mono">${escapeHtml(it.jp)}</span> <span class="small">(ふりがな: ${escapeHtml(it.furigana)})</span>`;
+  ui.feedback.innerHTML=`Respuesta: ${target}`;
+  renderExamples(it);
+  renderMnemo(it);
+}
+function scheduleNext(it,nextStage){
+  const now=NOW();
+  it.srsStage=Math.max(0,Math.min(8,nextStage));
+  it.lastSeenAt=now;
+  if(it.srsStage>=8){ it.dueAt=Number.MAX_SAFE_INTEGER; it.masteredAt=now; return; }
+  const mins=STAGE_MINUTES[it.srsStage];
+  it.dueAt=now+minutesToMs(mins);
+}
+function grade(it,g){
+  let nextStage=it.srsStage;
+  if(g==="again"){ it.wrongStreak+=1; it.correctStreak=0; nextStage=Math.max(0,it.srsStage-1); state.stats.wrong+=1; }
+  else if(g==="hard"){ it.correctStreak+=1; nextStage=it.srsStage; state.stats.correct+=1; }
+  else if(g==="good"){ it.correctStreak+=1; nextStage=it.srsStage+1; state.stats.correct+=1; }
+  else if(g==="easy"){ it.correctStreak+=1; nextStage=it.srsStage+2; state.stats.correct+=1; }
+  state.stats.totalReviews+=1;
+  scheduleNext(it,nextStage);
+  saveState(state);
+}
+function nextReview(){
+  session.idx+=1;
+  maybeAdvanceLevel();
+  updateSidebar();
+  ui.answerInput.value="";
+  ui.examplesBox.style.display="none";
+  if(session.idx>=session.queue.length){
+    session.active=false;
+    ui.feedback.innerHTML=`<span class="ok">Reviews completados.</span> Si no hay due, haz Lessons o Grammar.`;
+    setPrompt(null,"reviews"); return;
+  }
+  session.mode=Math.random()<0.65?"jp-to-meaning":"meaning-to-jp";
+  const it=session.queue[session.idx];
+  ui.feedback.textContent="Siguiente.";
+  setPrompt(it,"reviews",session.mode);
+}
+
+/* Deck */
+function addItemFromForm(){
+  const jlpt=ui.itemJlpt.value;
+  const level=Number(ui.itemLevel.value||1);
+  const type=ui.itemType.value;
+  const jp=ui.jp.value.trim();
+  const furigana=ui.furigana.value.trim();
+  const meaning=ui.meaning.value.trim();
+  const mnemonic=ui.mnemonic.value.trim();
+  const raw=ui.examples.value.trim();
+  const examples=raw?raw.split(/\n/).map(s=>s.trim()).filter(Boolean):[];
+  if(!jp||!furigana||!meaning){ ui.feedback.innerHTML=`<span class="bad">Faltan campos:</span> jp / furigana / meaning.`; return; }
+  state.items.unshift({
+    id:uid(), jlpt, level, type, jp, furigana, meaning, mnemonic, examples,
+    learnedAt:0, srsStage:0, dueAt:NOW(), correctStreak:0, wrongStreak:0, lastSeenAt:0, masteredAt:0
+  });
+  saveState(state);
+  ui.jp.value=""; ui.furigana.value=""; ui.meaning.value=""; ui.mnemonic.value=""; ui.examples.value="";
+  ui.feedback.innerHTML=`<span class="ok">Item agregado.</span>`;
+  updateSidebar();
+}
+function importJson(){
+  const t=ui.importBox.value.trim();
+  if(!t) return;
+  try{
+    const parsed=JSON.parse(t);
+    if(!Array.isArray(parsed)) throw new Error("Se espera un array JSON.");
+    const key=(it)=>`${it.jlpt}::${it.level}::${it.type}::${it.jp}`;
+    const existing=new Set(state.items.map(it=>key(it)));
+    for(const src of parsed){
+      if(!src||!src.jp||!src.furigana||!src.meaning) continue;
+      const jlpt=String(src.jlpt??"N3");
+      if (!["N5","N4","N3","N2","N1"].includes(jlpt)) continue; // enforce known levels
+      const level=Number(src.level??1);
+      const type=String(src.type??"vocab");
+      const jp=String(src.jp);
+      const k=key({jlpt,level,type,jp});
+      if(existing.has(k)) continue;
+      state.items.unshift({
+        id:uid(), jlpt, level, type, jp,
+        furigana:String(src.furigana),
+        meaning:String(src.meaning),
+        mnemonic:String(src.mnemonic??""),
+        examples:Array.isArray(src.examples)?src.examples.map(String):[],
+        learnedAt:0, srsStage:0, dueAt:NOW(), correctStreak:0, wrongStreak:0, lastSeenAt:0, masteredAt:0
+      });
+      existing.add(k);
+    }
+    saveState(state);
+    ui.feedback.innerHTML=`<span class="ok">Import OK (solo N4/N3).</span>`;
+    updateSidebar();
+  }catch(e){
+    ui.feedback.innerHTML=`<span class="bad">Import error:</span> <span class="mono">${escapeHtml(e.message||String(e))}</span>`;
+  }
+}
+async function exportJson(){
+  const payload=JSON.stringify(state.items.map(it=>({
+    jlpt:it.jlpt, level:it.level, type:it.type, jp:it.jp, furigana:it.furigana, meaning:it.meaning,
+    mnemonic:it.mnemonic??"", examples:it.examples
+  })),null,2);
+  try{ await navigator.clipboard.writeText(payload); ui.feedback.innerHTML=`<span class="ok">Export copiado al portapapeles.</span>`; }
+  catch{ ui.importBox.value=payload; ui.feedback.innerHTML=`<span class="ok">Export puesto en la caja (fallback).</span>`; }
+}
+function resetProgress(){
+  const now=NOW();
+  for(const it of state.items){
+    it.learnedAt=0; it.srsStage=0; it.dueAt=now;
+    it.correctStreak=0; it.wrongStreak=0; it.lastSeenAt=0; it.masteredAt=0;
+  }
+  state.currentLevel=1;
+  state.stats={ totalReviews:0, correct:0, wrong:0, lastSessionAt:0 };
+  saveState(state);
+  ui.feedback.innerHTML=`<span class="ok">Progreso de vocab reiniciado.</span>`;
+  updateSidebar();
+}
+function wipeAll(){
+  const pid=getActiveProfileId(); if(pid){ localStorage.removeItem(profileStateKey(pid)); }
+  state=seedDeck();
+  saveState(state);
+  ui.feedback.innerHTML=`<span class="ok">Todo borrado y resembrado.</span>`;
+  ui.studyJlpt.value = state.settings.studyJlpt;
+  initGrammar();
+  updateSidebar();
+}
+
+/* Grammar UI */
+let gState = { level: "N3", idx: 0, current: null };
+
+function grammarForLevel(level){
+  return GRAMMAR.filter(g => g.level === level);
+}
+function renderGrammarList(){
+  const level = ui.gLevel.value;
+  const list = grammarForLevel(level);
+
+  ui.gList.innerHTML = list.map((g,i)=>{
+    const active = (gState.current && g.key === gState.current.key);
+    return `<div class="gItem ${active?"active":""}" data-idx="${i}">
+      <div class="gTitle">${escapeHtml(g.title)}</div>
+      <div class="gDesc"><span class="tag">${escapeHtml(g.level)}</span> ${escapeHtml(g.theory)}</div>
+    </div>`;
+  }).join("");
+
+  ui.gList.querySelectorAll(".gItem").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const idx = Number(el.getAttribute("data-idx"));
+      pickGrammarByIndex(idx);
+    });
+  });
+}
+function pickGrammarByIndex(idx){
+  const level = ui.gLevel.value;
+  const list = grammarForLevel(level);
+  if (!list.length) return;
+  if (Number.isNaN(idx) || idx < 0 || idx >= list.length) idx = 0;
+  gState.level = level;
+  gState.idx = idx;
+  gState.current = list[idx];
+
+  state.grammar.lastLevel = level;
+  state.grammar.lastKey = gState.current.key;
+  saveState(state);
+
+  ui.gTheoryBox.style.display = "block";
+  ui.gTheoryText.textContent = gState.current.theory;
+  ui.gSentence.innerHTML = kanaParensToRuby(gState.current.cloze.replace("__", "___"));
+  ui.gPromptMeta.innerHTML = `<span class="tag">${escapeHtml(level)}</span> <span class="tag">${escapeHtml(gState.current.key)}</span> Hint: ${escapeHtml(gState.current.hint)}`;
+  ui.gAnswer.value = "";
+  ui.gFeedback.textContent = "Escribe la forma correcta para completar el hueco.";
+  renderGrammarList();
+}
+function nextGrammar(){
+  const list = grammarForLevel(ui.gLevel.value);
+  if (!list.length) return;
+  const next = (gState.idx + 1) % list.length;
+  pickGrammarByIndex(next);
+}
+function randomGrammar(){
+  const list = grammarForLevel(ui.gLevel.value);
+  if (!list.length) return;
+  const idx = Math.floor(Math.random() * list.length);
+  pickGrammarByIndex(idx);
+}
+function checkGrammar(){
+  const g = gState.current;
+  if (!g) return;
+  const u = normalize(ui.gAnswer.value);
+  const answers = (g.answers || []).map(a => normalize(a));
+  const ok = answers.includes(u);
+  state.grammar.attempts += 1;
+  if (ok) state.grammar.correct += 1;
+  else state.grammar.wrong += 1;
+  saveState(state);
+  updateSidebar();
+  ui.gFeedback.innerHTML = ok
+    ? `<span class="ok">Correcto.</span> Respuesta: <span class="mono">${escapeHtml(g.answers[0])}</span>`
+    : `<span class="bad">Incorrecto.</span> Respuesta: <span class="mono">${escapeHtml(g.answers[0])}</span>`;
+}
+function showGrammar(){
+  const g = gState.current;
+  if (!g) return;
+  ui.gFeedback.innerHTML = `Respuesta: <span class="ok mono">${escapeHtml(g.answers[0])}</span> · ${escapeHtml(g.ex)}`;
+}
+
+function initGrammar(){
+  ui.gLevel.value = state.grammar.lastLevel || currentStudy() || "N3";
+  // Preferir que gLevel siga el study (si no es ALL)
+  if (currentStudy() !== "ALL") ui.gLevel.value = currentStudy();
+  renderGrammarList();
+  const list = grammarForLevel(ui.gLevel.value);
+  if (!list.length){
+    ui.gSentence.textContent = "—";
+    ui.gTheoryBox.style.display = "none";
+    ui.gFeedback.textContent = "No hay puntos cargados para este nivel (edítalo en el array GRAMMAR).";
+    return;
+  }
+  // volver a último, si existe
+  const lastKey = state.grammar.lastKey;
+  const idx = lastKey ? Math.max(0, list.findIndex(x => x.key === lastKey)) : 0;
+  pickGrammarByIndex(idx >= 0 ? idx : 0);
+}
+
+/* Tab wiring */
+ui.tabLessons.addEventListener("click",()=>{
+  setActiveTab(ui.tabLessons);
+  ui.mainTitle.textContent="Lessons";
+  setMain("vocab");
+  startLessons();
+});
+ui.tabReviews.addEventListener("click",()=>{
+  setActiveTab(ui.tabReviews);
+  ui.mainTitle.textContent="Reviews";
+  setMain("vocab");
+  startReviews();
+});
+ui.tabGrammar.addEventListener("click",()=>{
+  setActiveTab(ui.tabGrammar);
+  setMain("grammar");
+  initGrammar();
+});
+ui.tabDeck.addEventListener("click",()=>{
+  setActiveTab(ui.tabDeck);
+  setMain("deck");
+  ui.feedback.textContent="Añade o importa items (solo N4/N3).";
+  setPrompt(null,"deck");
+  ui.examplesBox.style.display="none";
+  updateSidebar();
+});
+
+/* Study selector */
+if(lessonStudyEl){
+  lessonStudyEl.addEventListener("change", ()=>{
+    ui.studyJlpt.value = lessonStudyEl.value;
+    ui.studyJlpt.dispatchEvent(new Event('change'));
+  });
+}
+
+ui.studyJlpt.addEventListener("change", ()=>{
+  state.settings.studyJlpt = ui.studyJlpt.value;
+  saveState(state);
+  // actualizar grammar level para seguir study (si no es ALL)
+  if (ui.studyJlpt.value !== "ALL") ui.gLevel.value = ui.studyJlpt.value;
+  updateSidebar();
+  // refrescar tab actual sin preguntar
+  const active = document.querySelector(".nav button.active")?.id;
+  if (active === "tabLessons") startLessons();
+  else if (active === "tabReviews") startReviews();
+  else if (active === "tabGrammar") initGrammar();
+});
+
+/* Vocab button wiring */
+ui.nextLessonBtn.addEventListener("click",nextLesson);
+ui.markLearnedBtn.addEventListener("click",markLearned);
+ui.exitLessonsBtn.addEventListener("click",exitLessons);
+
+ui.answerBtn.addEventListener("click",()=>{
+  const it=session.queue[session.idx];
+  if(!it) return;
+  const ok=checkAnswer(ui.answerInput.value??"",it);
+  ui.feedback.innerHTML=ok?`<span class="ok">Correcto.</span> Ahora califica.`:`<span class="bad">Incorrecto.</span> Pulsa Show y luego califica.`;
+  if(ok){ kkShowPop(); }
+  renderExamples(it);
+});
+ui.showBtn.addEventListener("click",()=>showAnswer(session.queue[session.idx]));
+ui.againBtn.addEventListener("click",()=>{const it=session.queue[session.idx]; if(!it) return; grade(it,"again"); nextReview();});
+ui.hardBtn.addEventListener("click",()=>{const it=session.queue[session.idx]; if(!it) return; kkShowPop(); grade(it,"hard"); nextReview();});
+ui.goodBtn.addEventListener("click",()=>{const it=session.queue[session.idx]; if(!it) return; kkShowPop(); grade(it,"good"); nextReview();});
+ui.easyBtn.addEventListener("click",()=>{const it=session.queue[session.idx]; if(!it) return; kkShowPop(); grade(it,"easy"); nextReview();});
+ui.skipBtn.addEventListener("click",nextReview);
+ui.answerInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter") ui.answerBtn.click(); });
+
+/* Deck wiring */
+ui.addBtn.addEventListener("click",addItemFromForm);
+ui.importBtn.addEventListener("click",importJson);
+ui.exportBtn.addEventListener("click",exportJson);
+ui.resetProgressBtn.addEventListener("click",resetProgress);
+ui.wipeAllBtn.addEventListener("click",wipeAll);
+
+ui.lessonSize.value=state.settings.lessonSize??10;
+ui.reviewSize.value=state.settings.reviewSize??20;
+ui.strictness.value=state.settings.strictness??"lenient";
+ui.studyJlpt.value = state.settings.studyJlpt ?? "N4";
+const lessonStudyEl = document.getElementById("lessonStudy");
+if(lessonStudyEl){ lessonStudyEl.value = ui.studyJlpt.value; }
+
+
+/* Grammar wiring */
+ui.gLevel.addEventListener("change", ()=>{ renderGrammarList(); randomGrammar(); });
+ui.gRandom.addEventListener("click", randomGrammar);
+ui.gNext.addEventListener("click", nextGrammar);
+ui.gCheck.addEventListener("click", checkGrammar);
+ui.gShow.addEventListener("click", showGrammar);
+ui.gAnswer.addEventListener("keydown",(e)=>{ if(e.key==="Enter") ui.gCheck.click(); });
+
+
+/* Profiles (Netflix-like) */
+let editingProfileId = "";
+function defaultAvatarDataURI(seedText){
+  const txt = (seedText||"KK").slice(0,2).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#db2777"/>
+    </linearGradient></defs>
+    <rect width="220" height="220" rx="44" fill="url(#g)"/>
+    <text x="110" y="135" font-family="system-ui,Segoe UI,Roboto" font-size="86" font-weight="900" text-anchor="middle" fill="#f8fafc">${txt}</text>
+  </svg>`;
+  return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+}
+function showProfileGate(){
+  const gate = document.getElementById("profileGate");
+  if(!gate){ console.warn("profileGate not found"); return; }
+  gate.style.display = "block";
+  renderProfiles();
+}
+window.KK_showProfileGate = showProfileGate;
+function hideProfileGate(){ document.getElementById("profileGate").style.display = "none"; }
+
+function renderProfiles(){
+  const grid = document.getElementById("profilesGrid");
+  const profiles = loadProfiles();
+
+  const cards = profiles.map(p=>{
+    const img = p.avatar || defaultAvatarDataURI(p.name);
+    return `
+      <div class="card" style="text-align:center;cursor:pointer;padding:14px;" data-pid="${p.id}">
+        <div style="width:120px;height:120px;margin:0 auto;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:rgba(255,255,255,.6);">
+          <img alt="${escapeHtml(p.name)}" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+        </div>
+        <div style="margin-top:10px;font-weight:900;">${escapeHtml(p.name)}</div>
+      </div>`;
+  }).join("");
+
+  const addCard = `
+    <div class="card" style="text-align:center;cursor:pointer;padding:14px;border-style:dashed;" id="addProfileCard">
+      <div style="width:120px;height:120px;margin:0 auto;border-radius:18px;display:grid;place-items:center;border:1px dashed var(--border);background:rgba(255,255,255,.4);">
+        <div style="font-size:56px;font-weight:900;color:var(--muted);">+</div>
+      </div>
+      <div style="margin-top:10px;font-weight:900;color:var(--muted);">Agregar</div>
+    </div>`;
+  grid.innerHTML = cards + addCard;
+
+  grid.querySelectorAll("[data-pid]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const pid = el.getAttribute("data-pid");
+      setActiveProfileId(pid);
+      state = loadState() ?? seedDeck();
+      saveState(state);
+      hideProfileGate();
+      kkBootAfterProfile();
+      // Entrar a Lessons por defecto
+      ui.mainTitle.textContent="Lessons";
+      setMain("vocab");
+      startLessons();
+    });
+  });
+
+  document.getElementById("addProfileCard").addEventListener("click", ()=> openProfileEditor(""));
+}
+
+function openProfileEditor(pid){
+  editingProfileId = pid || "";
+  const box = document.getElementById("profileEditor");
+  box.style.display = "block";
+  const note = document.getElementById("profileEditorNote");
+  const name = document.getElementById("profileNameInput");
+  const file = document.getElementById("profileImageInput");
+  const preview = document.getElementById("avatarPreview");
+
+  file.value = "";
+  preview.dataset.img = "";
+
+  if(pid){
+    const p = loadProfiles().find(x=>x.id===pid);
+    name.value = p?.name || "";
+    const img = p?.avatar || defaultAvatarDataURI(p?.name||"KK");
+    preview.innerHTML = `<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+    note.textContent = "Editando perfil.";
+  }else{
+    name.value = "";
+    preview.innerHTML = `<div style="font-weight:900;color:var(--muted);">IMG</div>`;
+    note.textContent = "Creando perfil nuevo.";
+  }
+
+  file.onchange = ()=>{
+    const f = file.files && file.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=> {
+      preview.innerHTML = `<img src="${reader.result}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+      preview.dataset.img = String(reader.result);
+    };
+    reader.readAsDataURL(f);
+  };
+}
+function closeProfileEditor(){
+  document.getElementById("profileEditor").style.display = "none";
+  document.getElementById("avatarPreview").dataset.img = "";
+}
+function saveProfile(){
+  const name = document.getElementById("profileNameInput").value.trim();
+  const preview = document.getElementById("avatarPreview");
+  const img = preview.dataset.img || "";
+  if(!name){
+    document.getElementById("profileEditorNote").textContent = "Nombre requerido.";
+    return;
+  }
+  const profiles = loadProfiles();
+  if(editingProfileId){
+    const idx = profiles.findIndex(p=>p.id===editingProfileId);
+    if(idx>=0){
+      profiles[idx].name = name;
+      if(img) profiles[idx].avatar = img;
+    }
+  }else{
+    profiles.push({ id: uid(), name, avatar: img || defaultAvatarDataURI(name) });
+  }
+  saveProfiles(profiles);
+  closeProfileEditor();
+  renderProfiles();
+}
+
+function init(){
+  // Siempre mostrar selector de perfiles al abrir (como Netflix)
+  const profiles = loadProfiles();
+  showProfileGate();
+  if(!profiles.length){ openProfileEditor(""); }
+  return;
+}
+
+function kkBootAfterProfile(){
+  // Se llama al seleccionar un perfil
+  state = loadState() ?? seedDeck();
+  saveState(state);
+  ui.studyJlpt.value = state.settings.studyJlpt ?? "N4";
+  if(typeof lessonStudyEl !== "undefined" && lessonStudyEl){ lessonStudyEl.value = ui.studyJlpt.value; }
+  updateSidebar();
+  setActiveTab(ui.tabLessons);
+  ui.mainTitle.textContent="Lessons";
+  setMain("vocab");
+  startLessons();
+}
+setInterval(updateSidebar,1000);
+
+// Profile gate controls
+
+// Delegated fallback: switch profile always works
+document.addEventListener("click", (e)=>{
+  const t = e.target;
+  if(t && t.id === "switchProfileBtn"){
+    e.preventDefault();
+    try{ window.KK_showProfileGate && window.KK_showProfileGate(); }catch(_){}
+  }
+});
+
+const _sw=document.getElementById("switchProfileBtn"); if(_sw){ _sw.addEventListener("click", (e)=>{ e.preventDefault(); showProfileGate(); }); }
+const _mg=document.getElementById("manageProfilesBtn"); if(_mg){ _mg.addEventListener("click", ()=>{
+  const box = document.getElementById("profileEditor");
+  if(box.style.display === "none" || !box.style.display){ openProfileEditor(""); }
+  else closeProfileEditor();
+}); }
+const _sv=document.getElementById("saveProfileBtn"); if(_sv){ _sv.addEventListener("click", saveProfile); }
+const _cn=document.getElementById("cancelProfileBtn"); if(_cn){ _cn.addEventListener("click", ()=> closeProfileEditor()); }
+const _cl=document.getElementById("closeProfilesBtn"); if(_cl){ _cl.addEventListener("click", ()=> hideProfileGate()); }
+document.getElementById("profileGate").addEventListener("click", (e)=>{ if(e.target && e.target.id==="profileGate"){ hideProfileGate(); } });
+
+
+// Profile UI wiring
+document.addEventListener("DOMContentLoaded", ()=>{
+  const sw=document.getElementById("kkSwitchProfileBtn");
+  if(sw) sw.addEventListener("click", (e)=>{ e.preventDefault(); kkShowGate(); });
+
+  const mg=document.getElementById("kkManageBtn");
+  if(mg) mg.addEventListener("click", ()=>{
+    KK.manageMode = !KK.manageMode;
+    mg.textContent = KK.manageMode ? "Listo" : "Administrar";
+    kkCloseEditor();
+    kkRenderProfiles();
+  });
+
+  const close=document.getElementById("kkCloseGateBtn");
+  if(close) close.addEventListener("click", ()=> kkHideGate());
+
+  const gate=document.getElementById("kkProfileGate");
+  if(gate) gate.addEventListener("click",(e)=>{ if(e.target && e.target.id==="kkProfileGate"){ kkHideGate(); }});
+
+  const save=document.getElementById("kkSaveProfileBtn");
+  if(save) save.addEventListener("click", ()=> kkSaveProfile());
+
+  const del=document.getElementById("kkDeleteProfileBtn");
+  if(del) del.addEventListener("click", ()=>{ if(KK.editingId) kkDeleteProfile(KK.editingId); });
+
+  const cancel=document.getElementById("kkCancelProfileBtn");
+  if(cancel) cancel.addEventListener("click", ()=> kkCloseEditor());
+
+  const file=document.getElementById("kkProfileImage");
+  const preview=document.getElementById("kkAvatarPreview");
+  if(file && preview){
+    file.addEventListener("change", ()=>{
+      const f=file.files && file.files[0];
+      if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{ preview.innerHTML=`<img src="${r.result}" style="width:100%;height:100%;object-fit:cover;display:block"/>`; preview.dataset.img=String(r.result); };
+      r.readAsDataURL(f);
+    });
+  }
+});
+
+init();
+
+
+/* ===== KK Profiles (simple + stable) ===== */
+(function(){
+  const PREFIX="keini_kani";
+  const PROFILES_KEY = PREFIX + ":profiles_simple";
+  const ACTIVE_KEY = PREFIX + ":active_profile_simple";
+
+  function err(msg){
+    const el=document.getElementById("kkErr");
+    if(!el) return;
+    el.style.display="block";
+    el.textContent=msg;
+  }
+  window.addEventListener("error",(e)=>{ try{ err("Error: "+(e.message||e.error||"")); }catch(_){ }});
+
+  const state = { manage:false, editing:"" };
+
+  function loadProfiles(){
+    const raw = localStorage.getItem(PROFILES_KEY);
+    if(!raw) return [];
+    try{ const p=JSON.parse(raw); return Array.isArray(p)?p:[]; }catch{ return []; }
+  }
+  function saveProfiles(p){
+    try{ localStorage.setItem(PROFILES_KEY, JSON.stringify(p)); return true; }
+    catch(e){ console.error(e); err("No se pudo guardar (almacenamiento lleno/bloqueado)."); return false; }
+  }
+  function getActive(){ return localStorage.getItem(ACTIVE_KEY) || ""; }
+  function setActive(pid){ localStorage.setItem(ACTIVE_KEY, pid); }
+
+  function avatarDefault(name){
+    const txt=(name||"KK").slice(0,2).toUpperCase();
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ff0096"/><stop offset="1" stop-color="#7c3aed"/>
+      </linearGradient></defs>
+      <rect width="220" height="220" rx="44" fill="url(#g)"/>
+      <text x="110" y="135" font-family="system-ui,Segoe UI,Roboto" font-size="86" font-weight="900" text-anchor="middle" fill="#fff">${txt}</text>
+    </svg>`;
+    return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+  }
+  async function imgSmall(file){
+    const img = new Image();
+    const tmp = URL.createObjectURL(file);
+    try{
+      await new Promise((res, rej)=>{ img.onload=res; img.onerror=rej; img.src=tmp; });
+      const max=256;
+      const ratio=Math.min(1, max/Math.max(img.width,img.height));
+      const w=Math.max(1, Math.round(img.width*ratio));
+      const h=Math.max(1, Math.round(img.height*ratio));
+      const c=document.createElement("canvas"); c.width=w; c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      try{ return c.toDataURL("image/webp",0.82); }catch(_){ return c.toDataURL("image/png"); }
+    } finally { URL.revokeObjectURL(tmp); }
+  }
+
+  function gateShow(){
+    const g=document.getElementById("kkProfileGate"); if(!g) return;
+    state.manage=false; state.editing="";
+    const mb=document.getElementById("kkManageBtn"); if(mb) mb.textContent="Administrar";
+    editorClose();
+    g.style.display="block";
+    gridRender();
+  }
+  function gateHide(){
+    const g=document.getElementById("kkProfileGate"); if(!g) return;
+    g.style.display="none";
+    editorClose();
+  }
+  function editorOpen(pid){
+    state.editing = pid || "";
+    const box=document.getElementById("kkProfileEditor");
+    const note=document.getElementById("kkEditorNote");
+    const name=document.getElementById("kkProfileName");
+    const preview=document.getElementById("kkAvatarPreview");
+    const file=document.getElementById("kkProfileImage");
+    if(!box||!note||!name||!preview||!file) return;
+    box.style.display="block";
+    file.value="";
+    preview.dataset.img="";
+    if(pid){
+      const p=loadProfiles().find(x=>x.id===pid);
+      name.value=p?.name||"";
+      const img=p?.avatar||avatarDefault(name.value||"KK");
+      preview.innerHTML=`<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+      note.textContent="Editando perfil.";
+    }else{
+      name.value="";
+      preview.innerHTML=`<div style="font-weight:900;color:var(--muted);">IMG</div>`;
+      note.textContent="Creando perfil nuevo.";
+    }
+  }
+  function editorClose(){
+    const box=document.getElementById("kkProfileEditor"); if(box) box.style.display="none";
+    const note=document.getElementById("kkEditorNote"); if(note) note.textContent="";
+    const preview=document.getElementById("kkAvatarPreview"); if(preview) preview.dataset.img="";
+    state.editing="";
+  }
+
+  function profileSave(){
+    const note=document.getElementById("kkEditorNote");
+    const nameEl=document.getElementById("kkProfileName");
+    const preview=document.getElementById("kkAvatarPreview");
+    const name=(nameEl?.value||"").trim();
+    if(!name){ if(note) note.textContent="Nombre requerido."; return; }
+    const img=preview?.dataset?.img||"";
+    const profiles=loadProfiles();
+    let pid=state.editing;
+    if(pid){
+      const i=profiles.findIndex(p=>p.id===pid);
+      if(i>=0){ profiles[i].name=name; if(img) profiles[i].avatar=img; if(!profiles[i].avatar) profiles[i].avatar=avatarDefault(name); }
+    }else{
+      pid = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random());
+      profiles.push({id:pid,name,avatar:img||avatarDefault(name)});
+    }
+    if(!saveProfiles(profiles)) return;
+    setActive(pid);
+    editorClose();
+    gateHide();
+  }
+
+  function profileDelete(){
+    if(!state.editing) return;
+    const profiles=loadProfiles();
+    const p=profiles.find(x=>x.id===state.editing);
+    if(!confirm(`Eliminar ${p?.name||"este perfil"}?`)) return;
+    const rem=profiles.filter(x=>x.id!==state.editing);
+    saveProfiles(rem);
+    if(getActive()===state.editing) setActive("");
+    editorClose();
+    gridRender();
+  }
+
+  function gridRender(){
+    const grid=document.getElementById("kkProfilesGrid"); if(!grid) return;
+    const profiles=loadProfiles();
+    const cards = profiles.map(p=>{
+      const img=p.avatar||avatarDefault(p.name);
+      const controls = state.manage ? `
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+          <button data-kk-edit="${p.id}" style="padding:8px 10px;border-radius:14px;">Editar</button>
+          <button data-kk-del="${p.id}" style="padding:8px 10px;border-radius:14px;">Eliminar</button>
+        </div>` : ``;
+      return `
+        <div class="card" style="text-align:center;cursor:pointer;padding:14px;" data-kk-pid="${p.id}">
+          <div style="width:120px;height:120px;margin:0 auto;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:rgba(255,255,255,.6);">
+            <img alt="${escapeHtml(p.name)}" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+          </div>
+          <div style="margin-top:10px;font-weight:900;">${escapeHtml(p.name)}</div>
+          ${controls}
+        </div>`;
+    }).join("");
+    const addCard = `
+      <div class="card" style="text-align:center;cursor:pointer;padding:14px;border-style:dashed;" id="kkAddProfileCard">
+        <div style="width:120px;height:120px;margin:0 auto;border-radius:18px;display:grid;place-items:center;border:1px dashed var(--border);background:rgba(255,255,255,.4);">
+          <div style="font-size:56px;font-weight:900;color:var(--muted);">+</div>
+        </div>
+        <div style="margin-top:10px;font-weight:900;color:var(--muted);">Agregar</div>
+      </div>`;
+    grid.innerHTML = cards + addCard;
+  }
+
+  // Delegated clicks for stability
+  document.addEventListener("click", async (e)=>{
+    const t=e.target;
+    if(!t) return;
+
+    if(t.id==="kkSwitchProfileBtn"){ e.preventDefault(); gateShow(); return; }
+    if(t.id==="kkCloseGateBtn"){ e.preventDefault(); gateHide(); return; }
+    if(t.id==="kkManageBtn"){
+      e.preventDefault();
+      state.manage=!state.manage;
+      t.textContent = state.manage ? "Listo" : "Administrar";
+      editorClose();
+      gridRender();
+      return;
+    }
+    if(t.id==="kkSaveProfileBtn"){ e.preventDefault(); profileSave(); return; }
+    if(t.id==="kkCancelProfileBtn"){ e.preventDefault(); editorClose(); return; }
+    if(t.id==="kkDeleteProfileBtn"){ e.preventDefault(); profileDelete(); return; }
+
+    const add = t.closest && t.closest("#kkAddProfileCard");
+    if(add){ editorOpen(""); return; }
+
+    const eb = t.closest && t.closest("[data-kk-edit]");
+    if(eb){ editorOpen(eb.getAttribute("data-kk-edit")); return; }
+
+    const db = t.closest && t.closest("[data-kk-del]");
+    if(db){
+      state.editing = db.getAttribute("data-kk-del");
+      profileDelete();
+      return;
+    }
+
+    const card = t.closest && t.closest("[data-kk-pid]");
+    if(card){
+      if(state.manage) return;
+      setActive(card.getAttribute("data-kk-pid"));
+      gateHide();
+      return;
+    }
+  });
+
+  // backdrop close
+  const gate=document.getElementById("kkProfileGate");
+  if(gate){
+    gate.addEventListener("click",(e)=>{ if(e.target && e.target.id==="kkProfileGate"){ gateHide(); }});
+  }
+
+  // image input
+  const file=document.getElementById("kkProfileImage");
+  const preview=document.getElementById("kkAvatarPreview");
+  if(file && preview){
+    file.addEventListener("change", async ()=>{
+      const f=file.files && file.files[0];
+      if(!f) return;
+      const dataUrl = await imgSmall(f);
+      preview.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;display:block"/>`;
+      preview.dataset.img = String(dataUrl);
+    });
+  }
+
+  // First open: if no profiles, show gate and editor
+  const profiles = loadProfiles();
+  // Expose for fallback onclicks
+  window.kkProfilesOpen = gateShow;
+  window.kkProfilesClose = gateHide;
+
+  if(!profiles.length){
+    gateShow();
+    editorOpen("");
+  }
+})();
+
+
+
+
+
+
+</script>
+
+<div class="success-pop" id="kkPop">
+  <div class="success-badge" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--good);" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 6L9 17l-5-5"></path>
+    </svg>
+  </div>
+</div>
+
+<div id="kkErr"></div>
+
+<div id="kkProfileFixed">
+  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMjAiIGhlaWdodD0iMjIwIj4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmMDA5NiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzdjM2FlZCIvPgo8L2xpbmVhckdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjIyMCIgaGVpZ2h0PSIyMjAiIHJ4PSI0NCIgZmlsbD0idXJsKCNnKSIvPgo8dGV4dCB4PSIxMTAiIHk9IjEzNSIgZm9udC1mYW1pbHk9InN5c3RlbS11aSxTZWdvZSBVSSxSb2JvdG8iIGZvbnQtc2l6ZT0iODYiIGZvbnQtd2VpZ2h0PSI5MDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiPkw8L3RleHQ+Cjwvc3ZnPg==" alt="Lily">
+  <div>
+    <div class="name">Lily</div>
+    <div class="sub">Perfil</div>
+  </div>
+</div>
+
+
+<script>
+/* Expose lesson controls to window */
+(function(){
+  try{
+    if(typeof nextLesson==="function") window.nextLesson = nextLesson;
+    if(typeof markLearned==="function") window.markLearned = markLearned;
+    if(typeof exitLessons==="function") window.exitLessons = exitLessons;
+  }catch(e){ console.error(e); }
+})();
+</script>
+
+</body>
+</html>
