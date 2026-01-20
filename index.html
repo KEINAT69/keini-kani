@@ -1,15 +1,18 @@
-<!doctype html>
+ <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Keinap - Lessons & Reviews</title>
+  <title>Keinap - JLPT N5→N1</title>
   <style>
     :root { color-scheme: light; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #f6f7fb; color: #111; }
-    header { padding: 18px 16px; background: #111; color: #fff; }
-    header h1 { margin: 0; font-size: 18px; }
-    main { max-width: 980px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; grid-template-columns: 1.2fr 0.8fr; }
+    header { padding: 16px; background: #111; color: #fff; }
+    header .top { display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+    header h1 { margin: 0; font-size: 16px; }
+    header .tabs { display:flex; gap:8px; flex-wrap:wrap; }
+
+    main { max-width: 1080px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; grid-template-columns: 1.2fr 0.8fr; }
     @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 
     .card { background: #fff; border: 1px solid #e7e7ee; border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.05); overflow: hidden; }
@@ -18,7 +21,10 @@
     .card .content { padding: 14px; display: grid; gap: 10px; }
 
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    input[type="text"] { flex: 1; min-width: 200px; padding: 10px 12px; border: 1px solid #d9d9e6; border-radius: 10px; }
+    input[type="text"], select {
+      padding: 10px 12px; border: 1px solid #d9d9e6; border-radius: 10px; background:#fff;
+    }
+    input[type="text"] { flex: 1; min-width: 220px; }
     button { border: 1px solid #d0d0dd; background: #fff; padding: 10px 12px; border-radius: 10px; cursor: pointer; }
     button:hover { background: #f2f3f9; }
     button.primary { background: #111; color: #fff; border-color: #111; }
@@ -26,10 +32,18 @@
     button.danger { border-color: #ffb3b3; }
     button.danger:hover { background: #fff0f0; }
 
+    .tab {
+      border:1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.08);
+      color:#fff; padding:8px 10px; border-radius: 999px;
+      cursor:pointer; user-select:none; font-size: 12px;
+    }
+    .tab.active { background:#fff; color:#111; border-color:#fff; }
+
+    .muted { color: #666; font-size: 12px; }
     .list { display: grid; gap: 8px; }
     .item { border: 1px solid #ececf4; border-radius: 12px; padding: 10px; display: grid; gap: 8px; }
     .item-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-    .muted { color: #666; font-size: 12px; }
     .pill { font-size: 12px; padding: 4px 8px; border: 1px solid #e3e3ef; border-radius: 999px; background: #fafafe; }
     .pill.good { border-color: #cde9d7; background: #f3fbf6; }
     .pill.due { border-color: #ffe3a6; background: #fff9ec; }
@@ -51,26 +65,35 @@
 </head>
 <body>
 <header>
-  <h1>Keinap — Lessons & Reviews (desde 0, estable)</h1>
+  <div class="top">
+    <h1>Keinap — JLPT N5 → N1 (Lessons + Reviews)</h1>
+    <div class="tabs" id="levelTabs"></div>
+  </div>
 </header>
 
 <main>
-  <!-- Lessons -->
-  <section class="card" id="lessonsCard">
+  <section class="card">
     <header><h2>Lessons</h2></header>
     <div class="content">
       <div class="row">
-        <input id="newLessonText" type="text" placeholder="Nueva lección (ej: 10 verbos, kanji N5, etc.)" />
+        <select id="newLessonLevel" aria-label="Nivel JLPT">
+          <option value="N5">N5</option>
+          <option value="N4">N4</option>
+          <option value="N3">N3</option>
+          <option value="N2">N2</option>
+          <option value="N1">N1</option>
+        </select>
+        <input id="newLessonText" type="text" placeholder="Nueva lección (ej: 行く (いく) – ir)" />
         <button class="primary" id="addLessonBtn">Agregar</button>
       </div>
 
       <div class="kv">
         <div class="box">
-          <div class="k">Total</div>
+          <div class="k">Total (filtro actual)</div>
           <div class="v" id="statTotal">0</div>
         </div>
         <div class="box">
-          <div class="k">Aprendidas</div>
+          <div class="k">Aprendidas (filtro actual)</div>
           <div class="v" id="statLearned">0</div>
         </div>
       </div>
@@ -84,11 +107,13 @@
     </div>
   </section>
 
-  <!-- Reviews -->
-  <section class="card" id="reviewsCard">
+  <section class="card">
     <header><h2>Reviews</h2></header>
     <div class="content">
-      <div class="muted">Reglas simples: solo se revisa lo “learned”. Intervalos: Again(0d), Hard(+1d), Good(+3d), Easy(+7d). Skip no cambia nada.</div>
+      <div class="muted">
+        Filtra por nivel seleccionado arriba. Solo se repasa lo “learned”.
+        Intervalos: Again(0d), Hard(+1d), Good(+3d), Easy(+7d). Skip no cambia nada.
+      </div>
 
       <div class="item">
         <div class="item-top">
@@ -109,9 +134,7 @@
       </div>
 
       <div class="item">
-        <div class="item-top">
-          <div class="muted">Backup (export/import)</div>
-        </div>
+        <div class="item-top"><div class="muted">Backup (export/import)</div></div>
         <div class="row">
           <button id="exportBtn">Exportar JSON</button>
           <button id="importBtn">Importar JSON</button>
@@ -124,56 +147,24 @@
 </main>
 
 <script>
-/*
-  Aviso de palabras reservadas (JavaScript):
-  - const, let: declaración de variables (reservadas).
-  - function: define funciones (reservada).
-  - class: define clases (reservada, aquí no se usa).
-  - return, if, for, switch: control de flujo (reservadas).
-  No uses estos nombres como variables/funciones.
-*/
-
 (function () {
   'use strict';
 
-  // ----------------------------
-  // Estado + persistencia
-  // ----------------------------
-  const STORAGE_KEY = 'keinap_lessons_v1';
+  // Estado: palabras reservadas usadas aquí: const, let, function, return, if, for, switch, case, break, try, catch, new.
+  // No uses esos nombres como identificadores.
 
-  /** @typedef {{ id: string, text: string, learned: boolean, createdAt: number, learnedAt: number|null, dueAt: number|null, reps: number, lastGrade: string|null }} Lesson */
+  const STORAGE_KEY = 'keinap_jlpt_v2';
 
-  /** @type {{ lessons: Lesson[] }} */
+  /** @typedef {'ALL'|'N5'|'N4'|'N3'|'N2'|'N1'} Level */
+  /** @typedef {{ id:string, text:string, level:Level, learned:boolean, createdAt:number, learnedAt:number|null, dueAt:number|null, reps:number, lastGrade:string|null }} Lesson */
+  /** @type {{ lessons: Lesson[], ui: { level: Level } }} */
   let state = loadState();
 
-  function nowMs() { return Date.now(); }
-  function daysToMs(days) { return days * 24 * 60 * 60 * 1000; }
+  const LEVELS = /** @type {Level[]} */ (['ALL','N5','N4','N3','N2','N1']);
 
-  function uid() {
-    // id simple y suficiente para front local
-    return Math.random().toString(16).slice(2) + '-' + Math.random().toString(16).slice(2);
-  }
-
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { lessons: [] };
-      const parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.lessons)) return { lessons: [] };
-      return { lessons: parsed.lessons };
-    } catch {
-      return { lessons: [] };
-    }
-  }
-
-  function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
-
-  // ----------------------------
-  // Selectores DOM
-  // ----------------------------
   const el = {
+    levelTabs: document.getElementById('levelTabs'),
+    newLessonLevel: document.getElementById('newLessonLevel'),
     newLessonText: document.getElementById('newLessonText'),
     addLessonBtn: document.getElementById('addLessonBtn'),
     lessonsList: document.getElementById('lessonsList'),
@@ -194,10 +185,60 @@
     backupArea: document.getElementById('backupArea'),
   };
 
-  // ----------------------------
-  // Lógica Lessons
-  // ----------------------------
-  function addLesson(text) {
+  function nowMs() { return Date.now(); }
+  function daysToMs(days) { return days * 24 * 60 * 60 * 1000; }
+  function uid() { return Math.random().toString(16).slice(2) + '-' + Math.random().toString(16).slice(2); }
+
+  function normalizeLevel(x) {
+    const v = String(x || '').toUpperCase();
+    if (v === 'N5' || v === 'N4' || v === 'N3' || v === 'N2' || v === 'N1') return /** @type {Level} */ (v);
+    return 'ALL';
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { lessons: [], ui: { level: 'ALL' } };
+
+      const parsed = JSON.parse(raw);
+      const lessons = Array.isArray(parsed.lessons) ? parsed.lessons : [];
+      const uiLevel = parsed.ui && parsed.ui.level ? normalizeLevel(parsed.ui.level) : 'ALL';
+
+      const cleaned = lessons.map((l) => ({
+        id: String(l.id || uid()),
+        text: String(l.text || '').trim(),
+        level: normalizeLevel(l.level || 'N5'),
+        learned: Boolean(l.learned),
+        createdAt: Number(l.createdAt || nowMs()),
+        learnedAt: l.learned ? Number(l.learnedAt || nowMs()) : null,
+        dueAt: l.learned ? Number(l.dueAt || nowMs()) : null,
+        reps: Number(l.reps || 0),
+        lastGrade: l.lastGrade ? String(l.lastGrade) : null
+      })).filter(l => l.text);
+
+      return { lessons: cleaned, ui: { level: uiLevel } };
+    } catch {
+      return { lessons: [], ui: { level: 'ALL' } };
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function fmtDate(ms) {
+    if (!ms) return '-';
+    const d = new Date(ms);
+    return d.toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function getFilteredLessons() {
+    const lvl = state.ui.level;
+    if (lvl === 'ALL') return state.lessons;
+    return state.lessons.filter(l => l.level === lvl);
+  }
+
+  function addLesson(text, level) {
     const trimmed = String(text || '').trim();
     if (!trimmed) return;
 
@@ -205,10 +246,11 @@
     const lesson = {
       id: uid(),
       text: trimmed,
+      level: normalizeLevel(level || 'N5'),
       learned: false,
       createdAt: nowMs(),
       learnedAt: null,
-      dueAt: null,           // solo aplica cuando learned=true
+      dueAt: null,
       reps: 0,
       lastGrade: null
     };
@@ -226,12 +268,10 @@
 
     if (lesson.learned) {
       lesson.learnedAt = nowMs();
-      // al volverse learned, queda due inmediatamente (para que aparezca en Reviews)
-      lesson.dueAt = nowMs();
+      lesson.dueAt = nowMs(); // due inmediato
       lesson.reps = lesson.reps || 0;
       lesson.lastGrade = lesson.lastGrade || null;
     } else {
-      // si deja de ser learned, ya no participa en Reviews
       lesson.learnedAt = null;
       lesson.dueAt = null;
       lesson.reps = 0;
@@ -248,54 +288,37 @@
     renderAll();
   }
 
-  // ----------------------------
-  // Lógica Reviews (cola)
-  // ----------------------------
-  function getLearnedLessons() {
-    return state.lessons.filter(l => l.learned);
+  function getLearnedFiltered() {
+    return getFilteredLessons().filter(l => l.learned);
   }
 
-  function getDueLessons() {
+  function getDueFiltered() {
     const t = nowMs();
-    return getLearnedLessons().filter(l => (l.dueAt ?? 0) <= t);
+    return getLearnedFiltered().filter(l => (l.dueAt ?? 0) <= t);
   }
 
   function getNextReviewCandidate() {
-    // Estrategia estable: primero due, ordenados por dueAt asc, luego createdAt asc
-    const due = getDueLessons()
+    const due = getDueFiltered()
       .slice()
       .sort((a, b) => (a.dueAt ?? 0) - (b.dueAt ?? 0) || a.createdAt - b.createdAt);
-
-    if (due.length > 0) return due[0];
-
-    // Si no hay due, no mostramos nada (evita “cola fantasma”)
-    return null;
+    return due.length ? due[0] : null;
   }
 
   function applyReviewGrade(id, grade) {
     const lesson = state.lessons.find(l => l.id === id);
     if (!lesson || !lesson.learned) return;
 
-    const t = nowMs();
-
-    // Skip: no altera calendario
     if (grade === 'skip') {
       saveState();
       renderAll();
       return;
     }
 
-    // Intervalos simples (días)
-    const intervals = {
-      again: 0,
-      hard: 1,
-      good: 3,
-      easy: 7,
-    };
-
+    const intervals = { again: 0, hard: 1, good: 3, easy: 7 };
     const addDays = intervals[grade];
     if (typeof addDays !== 'number') return;
 
+    const t = nowMs();
     lesson.reps = (lesson.reps || 0) + 1;
     lesson.lastGrade = grade;
     lesson.dueAt = t + daysToMs(addDays);
@@ -304,18 +327,26 @@
     renderAll();
   }
 
-  // ----------------------------
-  // Render
-  // ----------------------------
-  function fmtDate(ms) {
-    if (!ms) return '-';
-    const d = new Date(ms);
-    return d.toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  function renderTabs() {
+    el.levelTabs.innerHTML = '';
+    for (const lvl of LEVELS) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tab' + (state.ui.level === lvl ? ' active' : '');
+      b.dataset.level = lvl;
+      b.textContent = (lvl === 'ALL') ? 'Todos' : lvl;
+      el.levelTabs.appendChild(b);
+    }
+
+    // sincroniza el selector de "nuevo lesson" con el filtro (si el filtro es N*)
+    if (state.ui.level !== 'ALL') el.newLessonLevel.value = state.ui.level;
   }
 
   function renderStats() {
-    const total = state.lessons.length;
-    const learned = state.lessons.filter(l => l.learned).length;
+    const lessons = getFilteredLessons();
+    const total = lessons.length;
+    const learned = lessons.filter(l => l.learned).length;
+
     el.statTotal.textContent = String(total);
     el.statLearned.textContent = String(learned);
 
@@ -325,17 +356,20 @@
   }
 
   function renderLessonsList() {
+    const lessons = getFilteredLessons();
     el.lessonsList.innerHTML = '';
 
-    if (state.lessons.length === 0) {
+    if (lessons.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'muted';
-      empty.textContent = 'No hay lecciones todavía.';
+      empty.textContent = state.ui.level === 'ALL'
+        ? 'No hay lecciones todavía.'
+        : `No hay lecciones en ${state.ui.level}.`;
       el.lessonsList.appendChild(empty);
       return;
     }
 
-    for (const lesson of state.lessons) {
+    for (const lesson of lessons) {
       const wrap = document.createElement('div');
       wrap.className = 'item';
 
@@ -353,7 +387,7 @@
       meta.className = 'muted';
       const learnedText = lesson.learned ? `Learned: ${fmtDate(lesson.learnedAt)}` : 'No learned';
       const dueText = lesson.learned ? `Due: ${fmtDate(lesson.dueAt)}` : 'Due: -';
-      meta.textContent = `${learnedText} · ${dueText} · Reps: ${lesson.reps || 0}`;
+      meta.textContent = `${lesson.level} · ${learnedText} · ${dueText} · Reps: ${lesson.reps || 0}`;
 
       left.appendChild(title);
       left.appendChild(meta);
@@ -390,8 +424,8 @@
   }
 
   function renderReviews() {
-    const learned = getLearnedLessons();
-    const due = getDueLessons();
+    const learned = getLearnedFiltered();
+    const due = getDueFiltered();
     const next = getNextReviewCandidate();
 
     el.duePill.textContent = `Due: ${due.length}`;
@@ -402,48 +436,58 @@
         ? 'No hay items para repasar. Marca alguna lección como learned.'
         : 'No hay items vencidos ahora. Vuelve cuando haya due.';
       el.reviewMeta.textContent = '';
-      // Deshabilitar botones cuando no hay candidato evita “click sin efecto”
       for (const b of el.reviewButtons.querySelectorAll('button')) b.disabled = true;
       return;
     }
 
     el.reviewPrompt.textContent = next.text;
-    el.reviewMeta.textContent = `Last grade: ${next.lastGrade ?? '-'} · Reps: ${next.reps || 0} · Due: ${fmtDate(next.dueAt)} · Learned: ${fmtDate(next.learnedAt)}`;
+    el.reviewMeta.textContent =
+      `${next.level} · Last grade: ${next.lastGrade ?? '-'} · Reps: ${next.reps || 0} · Due: ${fmtDate(next.dueAt)} · Learned: ${fmtDate(next.learnedAt)}`;
 
     for (const b of el.reviewButtons.querySelectorAll('button')) {
       b.disabled = false;
-      b.dataset.id = next.id; // el “target” actual
+      b.dataset.id = next.id;
     }
   }
 
   function renderAll() {
+    renderTabs();
     renderStats();
     renderLessonsList();
     renderReviews();
   }
 
-  // ----------------------------
-  // Eventos (event delegation)
-  // ----------------------------
+  // Eventos
+  el.levelTabs.addEventListener('click', function (ev) {
+    const t = ev.target;
+    if (!(t instanceof HTMLElement)) return;
+    const lvl = t.dataset.level;
+    if (!lvl) return;
+
+    state.ui.level = normalizeLevel(lvl);
+    saveState();
+    renderAll();
+  });
+
   el.addLessonBtn.addEventListener('click', function () {
-    addLesson(el.newLessonText.value);
+    addLesson(el.newLessonText.value, el.newLessonLevel.value);
     el.newLessonText.value = '';
     el.newLessonText.focus();
   });
 
   el.newLessonText.addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter') {
-      addLesson(el.newLessonText.value);
+      addLesson(el.newLessonText.value, el.newLessonLevel.value);
       el.newLessonText.value = '';
     }
   });
 
   el.lessonsList.addEventListener('click', function (ev) {
-    const target = ev.target;
-    if (!(target instanceof HTMLElement)) return;
+    const t = ev.target;
+    if (!(t instanceof HTMLElement)) return;
 
-    const action = target.dataset.action;
-    const id = target.dataset.id;
+    const action = t.dataset.action;
+    const id = t.dataset.id;
     if (!action || !id) return;
 
     if (action === 'toggle-learned') toggleLearned(id);
@@ -451,19 +495,17 @@
   });
 
   el.reviewButtons.addEventListener('click', function (ev) {
-    const target = ev.target;
-    if (!(target instanceof HTMLButtonElement)) return;
+    const t = ev.target;
+    if (!(t instanceof HTMLButtonElement)) return;
 
-    const grade = target.dataset.grade;
-    const id = target.dataset.id; // viene del renderReviews()
+    const grade = t.dataset.grade;
+    const id = t.dataset.id;
     if (!grade || !id) return;
 
     applyReviewGrade(id, grade);
   });
 
-  // ----------------------------
-  // Backup (export/import/reset)
-  // ----------------------------
+  // Backup
   el.exportBtn.addEventListener('click', function () {
     el.backupArea.value = JSON.stringify(state, null, 2);
   });
@@ -476,10 +518,10 @@
       const parsed = JSON.parse(raw);
       if (!parsed || !Array.isArray(parsed.lessons)) return;
 
-      // saneo mínimo: solo campos esperados
       const cleaned = parsed.lessons.map((l) => ({
         id: String(l.id || uid()),
         text: String(l.text || '').trim(),
+        level: normalizeLevel(l.level || 'N5'),
         learned: Boolean(l.learned),
         createdAt: Number(l.createdAt || nowMs()),
         learnedAt: l.learned ? Number(l.learnedAt || nowMs()) : null,
@@ -488,23 +530,23 @@
         lastGrade: l.lastGrade ? String(l.lastGrade) : null
       })).filter(l => l.text);
 
-      state = { lessons: cleaned };
+      const uiLevel = parsed.ui && parsed.ui.level ? normalizeLevel(parsed.ui.level) : state.ui.level;
+
+      state = { lessons: cleaned, ui: { level: uiLevel } };
       saveState();
       renderAll();
     } catch {
-      // JSON inválido: no hacemos nada
+      // JSON inválido: no hace nada
     }
   });
 
   el.resetBtn.addEventListener('click', function () {
-    // Reset sin confirmación para evitar diálogos bloqueantes; si quieres confirmación lo cambio.
-    state = { lessons: [] };
+    state = { lessons: [], ui: { level: 'ALL' } };
     saveState();
     el.backupArea.value = '';
     renderAll();
   });
 
-  // Inicial
   renderAll();
 })();
 </script>
